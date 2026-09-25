@@ -129,5 +129,12 @@ class Settings:
     )
 
 
+# Outcome B message for documents with no legal/contractual content
+NON_LEGAL_DOCUMENT_MESSAGE: str = (
+    "This document doesn't appear to contain legal or contractual content. "
+    "JurisGuide is designed to analyze contracts and agreements — "
+    "try uploading an employment offer, rental agreement, or freelance contract instead."
+)
+
 # Global settings singleton
 settings = Settings()

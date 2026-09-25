@@ -7,6 +7,7 @@ without making additional LLM API calls (Pillar 3: Efficiency).
 from __future__ import annotations
 
 from typing import Union
+from core.config import NON_LEGAL_DOCUMENT_MESSAGE
 from schemas.employment import EmploymentOfferSchema
 from schemas.rental import RentalAgreementSchema
 from schemas.freelance import FreelanceContractSchema
@@ -24,7 +25,9 @@ def generate_plain_summary(
     elif isinstance(schema, FreelanceContractSchema):
         return _summarize_freelance(schema)
     elif isinstance(schema, FallbackDocumentSchema):
-        return schema.plain_summary
+        if not schema.document_has_legal_content:
+            return NON_LEGAL_DOCUMENT_MESSAGE
+        return schema.plain_summary or "General legal document analyzed."
     return "Legal document analyzed."
 
 

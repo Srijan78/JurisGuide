@@ -49,6 +49,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnCopyChecklist = document.getElementById("btn-copy-checklist");
   const btnReset = document.getElementById("btn-reset");
 
+  // DOM — Non-Legal (Outcome B)
+  const nonLegalSection = document.getElementById("non-legal-section");
+  const legalResultsContainer = document.getElementById("legal-results-container");
+  const nonLegalDocTitle = document.getElementById("non-legal-doc-title");
+  const nonLegalMessage = document.getElementById("non-legal-message");
+  const btnNonLegalReset = document.getElementById("btn-non-legal-reset");
+
   // DOM — Progress
   const progressSegments = document.querySelectorAll(".progress-segment");
   const progressLabels = document.querySelectorAll(".progress-label");
@@ -302,6 +309,38 @@ document.addEventListener("DOMContentLoaded", () => {
   // ----- Render report -----
   function renderReport(report) {
     try {
+      const isNonLegal = (report.overall_risk_level === "NON_LEGAL") ||
+        (!report.risk_items?.length && report.summary && report.summary.includes("doesn't appear to contain legal"));
+
+      if (isNonLegal) {
+        // OUTCOME B: Not a legal document state
+        if (legalResultsContainer) {
+          legalResultsContainer.setAttribute("hidden", "true");
+          legalResultsContainer.style.display = "none";
+        }
+        if (nonLegalSection) {
+          nonLegalSection.removeAttribute("hidden");
+          nonLegalSection.style.display = "block";
+        }
+        if (nonLegalDocTitle) {
+          nonLegalDocTitle.textContent = `${report.document_title || "Uploaded Document"}`;
+        }
+        if (nonLegalMessage) {
+          nonLegalMessage.textContent = report.summary || "This document doesn't appear to contain legal or contractual content. JurisGuide is designed to analyze contracts and agreements — try uploading an employment offer, rental agreement, or freelance contract instead.";
+        }
+        return;
+      }
+
+      // OUTCOME A or standard contracts: show legal results container, hide non-legal section
+      if (nonLegalSection) {
+        nonLegalSection.setAttribute("hidden", "true");
+        nonLegalSection.style.display = "none";
+      }
+      if (legalResultsContainer) {
+        legalResultsContainer.removeAttribute("hidden");
+        legalResultsContainer.style.display = "block";
+      }
+
       // Risk badge
       const riskLevel = report.overall_risk_level || "general";
       reportRiskBadge.textContent = `${riskLevel} risk`;
@@ -406,16 +445,29 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ----- Reset -----
-  btnReset.addEventListener("click", () => {
+  function resetApp() {
     selectedFile = null;
     currentSessionId = null;
     fileInput.value = "";
     selectedFileName.textContent = "";
     pastedText.value = "";
+    if (nonLegalSection) {
+      nonLegalSection.setAttribute("hidden", "true");
+      nonLegalSection.style.display = "none";
+    }
+    if (legalResultsContainer) {
+      legalResultsContainer.removeAttribute("hidden");
+      legalResultsContainer.style.display = "block";
+    }
     hideLoading();
     showSection(inputSection);
     setProgress(1);
-  });
+  }
+
+  btnReset.addEventListener("click", resetApp);
+  if (btnNonLegalReset) {
+    btnNonLegalReset.addEventListener("click", resetApp);
+  }
 
   function formatCategoryLabel(cat) {
     const map = {

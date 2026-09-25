@@ -7,7 +7,7 @@ and actionable checklist compilation. 100% deterministic with zero LLM calls.
 from __future__ import annotations
 
 from typing import Union, Dict, Any, List
-from core.config import settings
+from core.config import settings, NON_LEGAL_DOCUMENT_MESSAGE
 from output.models import AnalysisReport, RiskItem, MissingClauseItem, ChecklistQuestion, Severity
 from output.templater import generate_plain_summary
 from output.checklist import generate_action_checklist
@@ -58,7 +58,30 @@ def analyze_extracted_document(
         risks = evaluate_freelance_rules(schema)
         missing = detect_missing_clauses(schema)
     elif isinstance(schema, FallbackDocumentSchema):
-        # Fallback path: No schema-specific scoring or false confidence claims
+        if not schema.document_has_legal_content:
+            # OUTCOME B: Not a legal document (no contractual content at all)
+            # Enforce split in code: do not parse or render any risk items, severity badges, or questions
+            return AnalysisReport(
+                document_type=document_type,
+                document_title=document_title,
+                overall_risk_level="NON_LEGAL",
+                summary=NON_LEGAL_DOCUMENT_MESSAGE,
+                risk_items=[],
+                missing_clauses=[],
+                checklist=[],
+                structured_data=schema.model_dump(),
+                legal_disclaimer=settings.legal_disclaimer,
+                stats={
+                    "high_risks": 0,
+                    "medium_risks": 0,
+                    "low_risks": 0,
+                    "info_risks": 0,
+                    "missing_clauses": 0,
+                    "total_flags": 0,
+                },
+            )
+
+        # OUTCOME A: General legal document (genuinely contractual, e.g. NDA, generic ToS)
         # Transform fallback points_to_review into informational risk items
         for idx, point in enumerate(schema.points_to_review):
             risks.append(RiskItem(

@@ -4,17 +4,22 @@ from __future__ import annotations
 
 from typing import List, Optional
 from pydantic import BaseModel, Field
+from core.config import NON_LEGAL_DOCUMENT_MESSAGE
 
 
 class FallbackDocumentSchema(BaseModel):
     """Structured extraction for unsupported or miscellaneous legal documents."""
+    document_has_legal_content: bool = Field(
+        default=True,
+        description="Whether this document contains genuine legal, contractual, or binding obligations."
+    )
     detected_document_type: str = Field(
         default="General Legal Document",
-        description="Best-guess document type (e.g., Non-Disclosure Agreement, Power of Attorney)."
+        description="Best-guess document type (e.g., Non-Disclosure Agreement, Power of Attorney, Non-Legal Document)."
     )
     plain_summary: str = Field(
-        ...,
-        description="Comprehensive plain-language summary of what this document agrees to."
+        default="",
+        description="Comprehensive plain-language summary of what this document agrees to or contains."
     )
     identified_parties: List[str] = Field(
         default_factory=list,

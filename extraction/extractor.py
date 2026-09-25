@@ -82,15 +82,24 @@ Extract:
 """
 
 FALLBACK_PROMPT = """You are a helpful legal assistant analyzing a document that does not fall into standard templates.
-Provide a clear, plain-language general analysis in JSON matching:
+FIRST, determine whether this document contains ANY genuine legal, contractual, or binding obligations (e.g., contracts, agreements, NDAs, terms of service, waivers, powers of attorney, settlement terms, licenses, or formal legal notices).
+If the document is purely non-legal or non-contractual (e.g., travel itineraries, trip guides, packing lists, trail notes, recipes, general articles, personal notes, casual emails with no legal commitments), set 'document_has_legal_content' to false.
+
+Provide a clear, structured analysis in JSON matching:
 {
-  "detected_document_type": "Best guess of document type (e.g. Non-Disclosure Agreement, Invoice)",
-  "plain_summary": "Comprehensive 3-5 sentence plain-language summary of what is agreed to",
+  "document_has_legal_content": true or false,
+  "detected_document_type": "Best guess of document type (e.g. Non-Disclosure Agreement, Terms of Service, or Non-Legal Document)",
+  "plain_summary": "Comprehensive 3-5 sentence plain-language summary of what the document contains or agrees to",
   "identified_parties": ["Party A", "Party B"],
   "key_dates_and_deadlines": ["Effective date: ...", "Termination date: ..."],
   "core_obligations": ["Obligation 1...", "Obligation 2..."],
   "points_to_review": ["Ambiguity in clause X...", "Missing protection on Y..."]
 }
+
+CRITICAL INSTRUCTION FOR NON-LEGAL DOCUMENTS:
+If 'document_has_legal_content' is false:
+Set 'identified_parties', 'key_dates_and_deadlines', 'core_obligations', and 'points_to_review' to empty lists [].
+Do NOT invent, fabricate, or hallucinate any legal risks, disclaimers, liability waivers, or recommendations.
 """
 
 PROMPT_MAP = {

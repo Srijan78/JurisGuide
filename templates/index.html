@@ -181,54 +181,67 @@
 
     <!-- STEP 3: Results -->
     <section id="results-section" class="results-container" aria-labelledby="report-heading" hidden style="display: none;">
-      <!-- Report header -->
-      <div class="report-header panel">
-        <div class="report-title-area">
-          <span id="report-risk-badge" class="badge-posture badge-posture-high" role="status" aria-label="Risk posture">High risk</span>
-          <div>
-            <h2 id="report-heading" class="report-title">Contract risk assessment</h2>
-            <p id="report-doc-title" class="report-subtitle">Document: contract.pdf</p>
+      <!-- OUTCOME B: Not a legal document state -->
+      <section id="non-legal-section" class="panel non-legal-panel" hidden style="display: none;">
+        <span class="non-legal-tag">Out of Scope</span>
+        <h2 id="non-legal-doc-title" class="non-legal-title">Uploaded Document</h2>
+        <p id="non-legal-message" class="non-legal-message">This document doesn't appear to contain legal or contractual content. JurisGuide is designed to analyze contracts and agreements — try uploading an employment offer, rental agreement, or freelance contract instead.</p>
+        <div class="non-legal-actions">
+          <button id="btn-non-legal-reset" class="btn btn-primary" type="button">Upload a contract instead</button>
+        </div>
+      </section>
+
+      <!-- Standard contract risk report (OUTCOME A & Standard Schemas) -->
+      <div id="legal-results-container">
+        <!-- Report header -->
+        <div class="report-header panel">
+          <div class="report-title-area">
+            <span id="report-risk-badge" class="badge-posture badge-posture-high" role="status" aria-label="Risk posture">High risk</span>
+            <div>
+              <h2 id="report-heading" class="report-title">Contract risk assessment</h2>
+              <p id="report-doc-title" class="report-subtitle">Document: contract.pdf</p>
+            </div>
+          </div>
+          <div class="report-quick-stats">
+            <div class="stat-pill"><span id="stat-high" class="stat-num stat-high">0</span> <span class="stat-lbl">high</span></div>
+            <div class="stat-pill"><span id="stat-med" class="stat-num stat-med">0</span> <span class="stat-lbl">medium</span></div>
+            <div class="stat-pill"><span id="stat-missing" class="stat-num stat-missing">0</span> <span class="stat-lbl">missing</span></div>
           </div>
         </div>
-        <div class="report-quick-stats">
-          <div class="stat-pill"><span id="stat-high" class="stat-num stat-high">0</span> <span class="stat-lbl">high</span></div>
-          <div class="stat-pill"><span id="stat-med" class="stat-num stat-med">0</span> <span class="stat-lbl">medium</span></div>
-          <div class="stat-pill"><span id="stat-missing" class="stat-num stat-missing">0</span> <span class="stat-lbl">missing</span></div>
+
+        <!-- Plain-language summary -->
+        <section class="panel" aria-labelledby="summary-heading">
+          <h3 id="summary-heading" class="card-title">Plain-language summary</h3>
+          <p id="report-summary-text" class="summary-body">Summary text will appear here.</p>
+        </section>
+
+        <!-- Flagged risks -->
+        <section class="panel" aria-labelledby="risks-heading">
+          <h3 id="risks-heading" class="card-title">Identified risk findings</h3>
+          <p class="section-desc">Evaluated deterministically by code against objective thresholds, not AI judgment.</p>
+          <div id="risks-list" class="risks-list" role="list"></div>
+        </section>
+
+        <!-- Missing clauses -->
+        <section id="missing-section" class="panel" aria-labelledby="missing-heading">
+          <h3 id="missing-heading" class="card-title">Absent or unaddressed clauses</h3>
+          <p class="section-desc">Standard protections expected in this document type that are not present in the text.</p>
+          <div id="missing-list" class="missing-list" role="list"></div>
+        </section>
+
+        <!-- Checklist -->
+        <section class="panel" aria-labelledby="checklist-heading">
+          <div class="checklist-header">
+            <h3 id="checklist-heading" class="card-title">Questions to ask before signing</h3>
+            <button id="btn-copy-checklist" class="btn btn-secondary btn-sm" type="button" aria-label="Copy checklist to clipboard">Copy questions</button>
+          </div>
+          <p class="section-desc">Tailored questions generated from your specific contract terms.</p>
+          <ul id="checklist-items" class="checklist-items"></ul>
+        </section>
+
+        <div class="reset-bar">
+          <button id="btn-reset" class="btn btn-secondary" type="button">Analyze another document</button>
         </div>
-      </div>
-
-      <!-- Plain-language summary -->
-      <section class="panel" aria-labelledby="summary-heading">
-        <h3 id="summary-heading" class="card-title">Plain-language summary</h3>
-        <p id="report-summary-text" class="summary-body">Summary text will appear here.</p>
-      </section>
-
-      <!-- Flagged risks -->
-      <section class="panel" aria-labelledby="risks-heading">
-        <h3 id="risks-heading" class="card-title">Identified risk findings</h3>
-        <p class="section-desc">Evaluated deterministically by code against objective thresholds, not AI judgment.</p>
-        <div id="risks-list" class="risks-list" role="list"></div>
-      </section>
-
-      <!-- Missing clauses -->
-      <section id="missing-section" class="panel" aria-labelledby="missing-heading">
-        <h3 id="missing-heading" class="card-title">Absent or unaddressed clauses</h3>
-        <p class="section-desc">Standard protections expected in this document type that are not present in the text.</p>
-        <div id="missing-list" class="missing-list" role="list"></div>
-      </section>
-
-      <!-- Checklist -->
-      <section class="panel" aria-labelledby="checklist-heading">
-        <div class="checklist-header">
-          <h3 id="checklist-heading" class="card-title">Questions to ask before signing</h3>
-          <button id="btn-copy-checklist" class="btn btn-secondary btn-sm" type="button" aria-label="Copy checklist to clipboard">Copy questions</button>
-        </div>
-        <p class="section-desc">Tailored questions generated from your specific contract terms.</p>
-        <ul id="checklist-items" class="checklist-items"></ul>
-      </section>
-
-      <div class="reset-bar">
-        <button id="btn-reset" class="btn btn-secondary" type="button">Analyze another document</button>
       </div>
     </section>
   </main>

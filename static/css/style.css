@@ -1123,6 +1123,58 @@ body {
 
 
 /* ----------------------------------------------------------------
+   NON-LEGAL DOCUMENT STATE (Outcome B)
+   ---------------------------------------------------------------- */
+.non-legal-panel {
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-hair);
+  padding: 3.5rem 2.5rem;
+  text-align: center;
+  max-width: 720px;
+  margin: 1.5rem auto 2.5rem;
+}
+
+.non-legal-tag {
+  display: inline-block;
+  padding: 0.35rem 0.85rem;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fog);
+  background-color: var(--bg-inset);
+  border: 1px solid var(--ash);
+  margin-bottom: 1.25rem;
+}
+
+.non-legal-title {
+  font-family: var(--font-serif);
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: var(--parchment);
+  margin-bottom: 1.15rem;
+}
+
+.non-legal-message {
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: var(--parchment);
+  margin-bottom: 2.25rem;
+  max-width: 580px;
+  margin-left: auto;
+  margin-right: auto;
+  opacity: 0.92;
+}
+
+.non-legal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+
+/* ----------------------------------------------------------------
    FOOTER
    ---------------------------------------------------------------- */
 .app-footer {
