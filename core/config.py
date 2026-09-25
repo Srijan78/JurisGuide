@@ -16,16 +16,66 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+# ==============================================================================
+# Deterministic Risk Threshold Constants: Employment Offer Schema
+# ==============================================================================
+
+# Bond Duration (Months)
+BOND_DURATION_HIGH_MONTHS: int = 24
+BOND_DURATION_MEDIUM_MONTHS: int = 12
+
+# Bond Amount (Multiple of Monthly Gross Salary)
+BOND_SALARY_MULTIPLE_HIGH: float = 6.0
+BOND_SALARY_MULTIPLE_MEDIUM: float = 3.0
+
+# Notice Period Asymmetry (Days)
+NOTICE_ASYMMETRY_EMPLOYEE_MIN_DAYS_HIGH: int = 60
+NOTICE_ASYMMETRY_GAP_MEDIUM_DAYS: int = 30
+MAX_NOTICE_PERIOD_DAYS: int = 90
+
+# Non-Compete Restrictions
+NON_COMPETE_DURATION_HIGH_MONTHS: int = 12
+NON_COMPETE_DURATION_MEDIUM_MONTHS: int = 6
+NON_COMPETE_BROAD_SCOPES: tuple[str, ...] = (
+    "worldwide",
+    "global",
+    "unlimited",
+    "anywhere",
+    "any industry",
+    "all industries",
+    "nationwide",
+    "across country",
+)
+
+# Other Employment Constants
+UNREASONABLE_PROBATION_MONTHS: int = 6
+HIGH_VARIABLE_PAY_PCT: float = 35.0
+
+
 @dataclass(frozen=True)
 class EmploymentThresholds:
     """Thresholds for deterministic Employment Offer risk analysis."""
-    max_bond_duration_months: int = 12
-    max_bond_salary_multiple: float = 3.0
-    max_notice_period_days: int = 90
-    max_notice_asymmetry_ratio: float = 2.0  # employee_days / employer_days
-    max_non_compete_duration_months: int = 6
-    unreasonable_probation_months: int = 6
-    high_variable_pay_pct: float = 35.0
+    # Bond duration
+    bond_duration_high_months: int = BOND_DURATION_HIGH_MONTHS
+    bond_duration_medium_months: int = BOND_DURATION_MEDIUM_MONTHS
+    max_bond_duration_months: int = BOND_DURATION_HIGH_MONTHS  # backwards compatibility alias
+    # Bond salary multiple
+    bond_salary_multiple_high: float = BOND_SALARY_MULTIPLE_HIGH
+    bond_salary_multiple_medium: float = BOND_SALARY_MULTIPLE_MEDIUM
+    max_bond_salary_multiple: float = BOND_SALARY_MULTIPLE_HIGH  # backwards compatibility alias
+    # Notice period
+    notice_asymmetry_employee_min_days_high: int = NOTICE_ASYMMETRY_EMPLOYEE_MIN_DAYS_HIGH
+    notice_asymmetry_gap_medium_days: int = NOTICE_ASYMMETRY_GAP_MEDIUM_DAYS
+    max_notice_period_days: int = MAX_NOTICE_PERIOD_DAYS
+    max_notice_asymmetry_ratio: float = 2.0
+    # Non-compete
+    non_compete_duration_high_months: int = NON_COMPETE_DURATION_HIGH_MONTHS
+    non_compete_duration_medium_months: int = NON_COMPETE_DURATION_MEDIUM_MONTHS
+    max_non_compete_duration_months: int = NON_COMPETE_DURATION_HIGH_MONTHS  # backwards compatibility alias
+    non_compete_broad_scopes: tuple[str, ...] = NON_COMPETE_BROAD_SCOPES
+    # Probation & pay
+    unreasonable_probation_months: int = UNREASONABLE_PROBATION_MONTHS
+    high_variable_pay_pct: float = HIGH_VARIABLE_PAY_PCT
 
 
 @dataclass(frozen=True)
