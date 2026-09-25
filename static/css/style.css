@@ -1,6 +1,7 @@
 /*
  * JurisGuide — Monochrome Legal-Document Stylesheet
  * Strictly greyish-black. No color accents. Hierarchy via value, weight, spacing.
+ * Desktop Widescreen (16:9) Proportions.
  * WCAG 2.1 AA compliant.
  */
 
@@ -8,23 +9,23 @@
    DESIGN TOKENS
    ---------------------------------------------------------------- */
 :root {
-  /* Named grey palette — 6 values, no raw hex elsewhere */
+  /* Named grey palette — 6 values, strictly monochrome */
   --soot:         #1a1a1a;  /* Deep charcoal background */
   --graphite:     #242424;  /* Elevated panel/card surface */
   --ash:          #3a3a3a;  /* Borders, dividers, inactive controls */
   --slate:        #6b6b6b;  /* Secondary / muted text */
   --fog:          #9a9a9a;  /* Tertiary text, hints */
   --parchment:    #e8e4df;  /* Primary body text — warm off-white */
-  --bone:         #ffffff;  /* Reserved ONLY for primary CTA text */
+  --bone:         #ffffff;  /* Reserved ONLY for primary CTA text & high contrast */
 
   /* Surfaces */
   --bg-page:      var(--soot);
   --bg-panel:     var(--graphite);
-  --bg-inset:     #1f1f1f;  /* Disclaimer / recessed areas */
+  --bg-inset:     #1f1f1f;  /* Recessed areas */
   --border-hair:  var(--ash);
   --border-faint: #2e2e2e;
 
-  /* Risk severities — still monochrome-adjacent, desaturated */
+  /* Risk severities — desaturated legal-tint monochrome */
   --risk-high-bg:     #2a1f1f;
   --risk-high-text:   #d4a0a0;
   --risk-high-border: #8b5c5c;
@@ -46,8 +47,8 @@
   --font-sans:  "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-mono:  "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Spacing */
-  --measure: 640px;  /* Max line width — keeps under ~75 chars */
+  /* Layout Measure — Desktop Widescreen (16:9 canvas) */
+  --measure: 1040px;
 }
 
 
@@ -70,7 +71,7 @@ body {
   font-family: var(--font-sans);
   background-color: var(--bg-page);
   color: var(--parchment);
-  line-height: 1.7;
+  line-height: 1.6;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -115,52 +116,89 @@ body {
 
 
 /* ----------------------------------------------------------------
-   LAYOUT — single column, document-like
+   LAYOUT — Desktop Widescreen
    ---------------------------------------------------------------- */
-.page-column {
+.page-column,
+.app-container {
   max-width: var(--measure);
   width: 100%;
   margin: 0 auto;
   padding: 0 2rem;
 }
 
-@media (max-width: 480px) {
-  .page-column {
+@media (min-width: 1400px) {
+  :root {
+    --measure: 1100px;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-column,
+  .app-container {
     padding: 0 1.25rem;
   }
 }
 
 
 /* ----------------------------------------------------------------
-   DISCLAIMER BANNER — quiet inset notice
+   DISCLAIMER BANNER — quiet inset notice with engine metadata
    ---------------------------------------------------------------- */
 .disclaimer-banner {
   background-color: var(--bg-inset);
   border-bottom: 1px solid var(--border-faint);
-  padding: 0.75rem 0;
+  padding: 0.5rem 0;
 }
-.disclaimer-banner .banner-text {
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  line-height: 1.5;
-  color: var(--slate);
+
+.disclaimer-inner {
   max-width: var(--measure);
   margin: 0 auto;
   padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
 }
-@media (max-width: 480px) {
-  .disclaimer-banner .banner-text {
+
+.disclaimer-inner .banner-text {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--slate);
+}
+
+.disclaimer-inner .engine-tag {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--slate);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .disclaimer-inner {
+    flex-direction: column;
+    align-items: flex-start;
     padding: 0 1.25rem;
   }
 }
 
 
 /* ----------------------------------------------------------------
-   HEADER — wordmark + tagline
+   HEADER — wordmark + tagline + metadata
    ---------------------------------------------------------------- */
 .app-header {
-  padding: 3rem 0 2rem;
+  padding: 1.75rem 0 1.25rem;
   border-bottom: 1px solid var(--border-hair);
+}
+
+.header-inner {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2rem;
 }
 
 .brand-line {
@@ -171,7 +209,7 @@ body {
 
 .wordmark {
   font-family: var(--font-serif);
-  font-size: 2.5rem;
+  font-size: 2.25rem;
   font-weight: 700;
   color: var(--parchment);
   letter-spacing: -0.02em;
@@ -179,21 +217,62 @@ body {
 }
 
 .version-tag {
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--fog);
-  letter-spacing: 0.03em;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-hair);
+  padding: 2px 7px;
   position: relative;
   top: -0.2em;
 }
 
 .tagline {
   font-family: var(--font-sans);
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   color: var(--slate);
-  margin-top: 0.5rem;
-  line-height: 1.6;
+  margin-top: 0.35rem;
+  line-height: 1.5;
+}
+
+.header-meta {
+  display: flex;
+  gap: 1.5rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.meta-title {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--slate);
+  font-weight: 600;
+}
+
+.meta-desc {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--fog);
+}
+
+@media (max-width: 768px) {
+  .header-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0 1.25rem;
+  }
+  .header-meta {
+    display: none;
+  }
 }
 
 
@@ -201,21 +280,21 @@ body {
    PROGRESS INDICATOR — 4-step thin segmented bar
    ---------------------------------------------------------------- */
 .progress-track {
-  padding: 1.5rem 0 0;
-  margin-bottom: 2.5rem;
+  padding: 1.25rem 0 0;
+  margin-bottom: 1.5rem;
 }
 
 .progress-segments {
   display: flex;
-  gap: 3px;
-  margin-bottom: 0.6rem;
+  gap: 4px;
+  margin-bottom: 0.5rem;
 }
 
 .progress-segment {
   flex: 1;
-  height: 3px;
+  height: 2px;
   background-color: var(--ash);
-  transition: background-color 0.3s ease;
+  transition: background-color 0.25s ease;
 }
 
 .progress-segment.active {
@@ -233,15 +312,25 @@ body {
 
 .progress-label {
   font-family: var(--font-sans);
-  font-size: 0.72rem;
-  color: var(--ash);
+  font-size: 0.75rem;
+  color: var(--slate);
   letter-spacing: 0.01em;
-  transition: color 0.3s ease;
+  transition: color 0.25s ease;
+}
+
+.progress-label .step-num {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--ash);
+  margin-right: 4px;
 }
 
 .progress-label.active {
   color: var(--parchment);
   font-weight: 600;
+}
+.progress-label.active .step-num {
+  color: var(--fog);
 }
 
 .progress-label.completed {
@@ -250,30 +339,103 @@ body {
 
 
 /* ----------------------------------------------------------------
-   PANELS — flat, separated by value shifts, no shadows
+   PANELS — flat, separated by value shifts, no rounded borders
    ---------------------------------------------------------------- */
 .panel {
   background-color: var(--bg-panel);
-  border: 1px solid var(--border-faint);
-  padding: 2rem;
-  margin-bottom: 1.75rem;
+  border: 1px solid var(--border-hair);
+  padding: 1.75rem 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.panel-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .panel-heading {
   font-family: var(--font-serif);
-  font-size: 1.35rem;
+  font-size: 1.4rem;
   font-weight: 600;
   color: var(--parchment);
-  margin-bottom: 0.35rem;
-  line-height: 1.3;
+  margin-bottom: 0.2rem;
+  line-height: 1.25;
 }
 
 .panel-note {
   font-family: var(--font-sans);
   font-size: 0.82rem;
   color: var(--slate);
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.format-badge-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.format-badge {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--fog);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-hair);
+  padding: 2px 7px;
+}
+
+.format-limit {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--slate);
+  margin-left: 4px;
+}
+
+
+/* ----------------------------------------------------------------
+   CONTRACT TYPES HINT BAR
+   ---------------------------------------------------------------- */
+.contract-types-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-faint);
+  margin-bottom: 1.25rem;
+}
+
+.types-bar-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--slate);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.type-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.type-pill {
+  font-size: 0.78rem;
+  color: var(--parchment);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-hair);
+  padding: 2px 9px;
+  cursor: default;
+  transition: border-color 0.15s ease;
+}
+
+.type-pill:hover {
+  border-color: var(--fog);
 }
 
 
@@ -283,7 +445,7 @@ body {
 .input-tabs {
   display: flex;
   gap: 0;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
   border-bottom: 1px solid var(--border-faint);
 }
 
@@ -291,12 +453,12 @@ body {
   background: none;
   border: none;
   font-family: var(--font-sans);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 500;
   color: var(--fog);
   cursor: pointer;
-  padding: 0.6rem 0;
-  margin-right: 1.75rem;
+  padding: 0.5rem 0;
+  margin-right: 2rem;
   border-bottom: 2px solid transparent;
   transition: color 0.15s ease, border-color 0.15s ease;
   position: relative;
@@ -315,35 +477,51 @@ body {
 
 
 /* ----------------------------------------------------------------
-   DROP ZONE — considered, not cliché
+   DROP ZONE — Widescreen Landscape Ratio
    ---------------------------------------------------------------- */
 .drop-zone {
-  border: 1px solid var(--ash);
-  padding: 2.75rem 1.5rem;
+  border: 1px dashed var(--ash);
+  padding: 2.25rem 2rem;
   text-align: center;
   cursor: pointer;
-  background-color: var(--bg-inset);
+  background-color: var(--bg-page);
   transition: border-color 0.2s ease, background-color 0.2s ease;
+  min-height: 165px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .drop-zone:hover,
 .drop-zone.dragover {
   border-color: var(--fog);
-  background-color: #222222;
+  background-color: #202020;
 }
 
 .drop-zone-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
+}
+
+.upload-icon-wrapper {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-hair);
+  background: var(--bg-panel);
+  margin-bottom: 0.25rem;
 }
 
 .upload-icon {
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   stroke: var(--fog);
-  stroke-width: 1.5;
+  stroke-width: 1.75;
   fill: none;
 }
 
@@ -353,9 +531,9 @@ body {
 }
 
 .drop-prompt {
-  font-size: 0.9rem;
-  color: var(--slate);
-  line-height: 1.5;
+  font-size: 0.92rem;
+  color: var(--parchment);
+  line-height: 1.4;
 }
 
 .drop-prompt .browse-link {
@@ -370,8 +548,13 @@ body {
   text-decoration-color: var(--parchment);
 }
 
+.drop-subprompt {
+  font-size: 0.76rem;
+  color: var(--slate);
+}
+
 .selected-file-display {
-  margin-top: 0.65rem;
+  margin-top: 0.5rem;
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--parchment);
@@ -384,15 +567,15 @@ body {
    ---------------------------------------------------------------- */
 .paste-area {
   width: 100%;
-  background-color: var(--bg-inset);
+  background-color: var(--bg-page);
   border: 1px solid var(--ash);
   color: var(--parchment);
   padding: 1rem;
   font-family: var(--font-sans);
-  font-size: 0.9rem;
-  line-height: 1.7;
+  font-size: 0.88rem;
+  line-height: 1.6;
   resize: vertical;
-  min-height: 180px;
+  min-height: 150px;
 }
 
 .paste-area::placeholder {
@@ -406,15 +589,41 @@ body {
 
 .paste-label {
   display: block;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--slate);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 
 /* ----------------------------------------------------------------
-   BUTTONS — only one primary; all others quiet
+   ACTION BAR & BUTTONS
    ---------------------------------------------------------------- */
+.action-bar {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-faint);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.action-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: var(--slate);
+  font-family: var(--font-mono);
+}
+
+.meta-dot {
+  width: 6px;
+  height: 6px;
+  background-color: var(--slate);
+  border-radius: 50%;
+  display: inline-block;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -424,7 +633,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
-  padding: 0.7rem 1.5rem;
+  padding: 0.7rem 1.75rem;
   transition: all 0.15s ease;
 }
 
@@ -436,6 +645,7 @@ body {
 
 .btn-primary:hover {
   background-color: var(--bone);
+  border-color: var(--bone);
 }
 
 .btn-primary:active {
@@ -456,12 +666,6 @@ body {
 .btn-sm {
   padding: 0.35rem 0.75rem;
   font-size: 0.8rem;
-}
-
-.action-bar {
-  margin-top: 1.75rem;
-  display: flex;
-  justify-content: flex-start;
 }
 
 
@@ -491,13 +695,13 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 1rem;
-  gap: 1.25rem;
+  padding: 3.5rem 1rem;
+  gap: 1rem;
 }
 
 .spinner {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border: 2px solid var(--ash);
   border-top-color: var(--parchment);
   border-radius: 50%;
@@ -510,7 +714,7 @@ body {
 
 .loading-text {
   color: var(--fog);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 500;
 }
 
@@ -529,7 +733,7 @@ body {
   background-color: var(--bg-inset);
   border: 1px solid var(--border-faint);
   padding: 1.25rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .detected-row {
@@ -691,8 +895,8 @@ body {
    SUMMARY
    ---------------------------------------------------------------- */
 .summary-body {
-  font-size: 0.95rem;
-  line-height: 1.8;
+  font-size: 0.92rem;
+  line-height: 1.75;
   color: var(--parchment);
 }
 
@@ -786,11 +990,11 @@ body {
 }
 
 .risk-explanation {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: var(--parchment);
-  line-height: 1.7;
+  line-height: 1.65;
   margin-bottom: 0.5rem;
-  opacity: 0.85;
+  opacity: 0.88;
 }
 
 .risk-recom {
@@ -856,7 +1060,7 @@ body {
 .missing-desc {
   font-size: 0.85rem;
   color: var(--parchment);
-  line-height: 1.7;
+  line-height: 1.65;
   opacity: 0.85;
 }
 
@@ -897,9 +1101,9 @@ body {
 }
 
 .checklist-item-text {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: var(--parchment);
-  line-height: 1.6;
+  line-height: 1.55;
 }
 
 .checklist-item-target {
@@ -917,18 +1121,21 @@ body {
 .app-footer {
   margin-top: auto;
   border-top: 1px solid var(--border-faint);
-  padding: 1.5rem 0;
+  padding: 1.25rem 0;
   background-color: var(--bg-inset);
 }
 
 .footer-inner {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 2rem;
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .footer-brand {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: var(--slate);
 }
 
@@ -936,6 +1143,15 @@ body {
   font-size: 0.72rem;
   color: var(--ash);
   line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .footer-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    padding: 0 1.25rem;
+  }
 }
 
 
@@ -954,11 +1170,26 @@ body {
    ---------------------------------------------------------------- */
 @media (max-width: 640px) {
   .wordmark {
-    font-size: 2rem;
+    font-size: 1.85rem;
   }
 
   .panel {
-    padding: 1.5rem;
+    padding: 1.25rem;
+  }
+
+  .panel-header-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .action-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .action-bar .btn-primary {
+    width: 100%;
   }
 
   .report-header {

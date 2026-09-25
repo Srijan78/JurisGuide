@@ -7,30 +7,45 @@
   <meta name="description" content="Automated clause-level risk analysis for employment offers, rental agreements, and freelance contracts. Flags risky clauses, detects missing protections, and generates negotiation checklists.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
   <!-- Skip link for keyboard accessibility -->
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
-  <!-- Disclaimer banner — quiet inset notice -->
+  <!-- Disclaimer banner — quiet inset notice with engine metadata -->
   <aside class="disclaimer-banner" role="note" aria-label="Legal disclaimer">
-    <p class="banner-text">Informational only — JurisGuide does not provide legal advice and does not replace a licensed professional.</p>
+    <div class="disclaimer-inner">
+      <p class="banner-text">Informational only — JurisGuide does not provide formal legal advice and does not replace a licensed attorney.</p>
+      <div class="engine-tag">Engine: Gemini Flash 3.5 &bull; Deterministic rules v2.1</div>
+    </div>
   </aside>
 
-  <!-- Header — wordmark + tagline -->
+  <!-- Header — wordmark + tagline + architectural metadata -->
   <header class="app-header">
-    <div class="page-column">
-      <div class="brand-line">
-        <h1 class="wordmark">JurisGuide</h1>
-        <span class="version-tag">v{{ version }}</span>
+    <div class="header-inner">
+      <div class="brand-block">
+        <div class="brand-line">
+          <h1 class="wordmark">JurisGuide</h1>
+          <span class="version-tag">v{{ version }}</span>
+        </div>
+        <p class="tagline">Automated clause-level risk analysis for employment offers, rental agreements, and freelance contracts.</p>
       </div>
-      <p class="tagline">Automated clause-level risk analysis for employment offers, rental agreements, and freelance contracts.</p>
+      <div class="header-meta">
+        <div class="meta-item">
+          <span class="meta-title">Processing Mode</span>
+          <span class="meta-desc">In-memory &bull; Zero storage</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-title">Architecture</span>
+          <span class="meta-desc">LLM extracts &bull; Code decides</span>
+        </div>
+      </div>
     </div>
   </header>
 
-  <main id="main-content" class="page-column">
+  <main id="main-content" class="page-column app-container">
 
     <!-- Progress indicator — 4-step thin segmented bar -->
     <nav class="progress-track" aria-label="Analysis progress">
@@ -41,17 +56,38 @@
         <div class="progress-segment" data-step="4"></div>
       </div>
       <div class="progress-labels">
-        <span class="progress-label active" data-step="1">Upload</span>
-        <span class="progress-label" data-step="2">Detect type</span>
-        <span class="progress-label" data-step="3">Confirm</span>
-        <span class="progress-label" data-step="4">Results</span>
+        <span class="progress-label active" data-step="1"><span class="step-num">01</span> Upload</span>
+        <span class="progress-label" data-step="2"><span class="step-num">02</span> Detect type</span>
+        <span class="progress-label" data-step="3"><span class="step-num">03</span> Confirm</span>
+        <span class="progress-label" data-step="4"><span class="step-num">04</span> Results</span>
       </div>
     </nav>
 
-    <!-- STEP 1: Upload panel -->
-    <section id="input-section" class="panel" aria-labelledby="input-heading">
-      <h2 id="input-heading" class="panel-heading">Upload your contract</h2>
-      <p class="panel-note">Supported formats: PDF, DOCX, JPG, and plain text (max 5 MB). Files are processed in memory only and never stored.</p>
+    <!-- STEP 1: Upload panel (Landscape Desktop Proportions) -->
+    <section id="input-section" class="panel upload-panel" aria-labelledby="input-heading">
+      <div class="panel-header-row">
+        <div>
+          <h2 id="input-heading" class="panel-heading">Upload your contract</h2>
+          <p class="panel-note">Select a document file or paste raw contract clauses for automated evaluation.</p>
+        </div>
+        <div class="format-badge-group">
+          <span class="format-badge">PDF</span>
+          <span class="format-badge">DOCX</span>
+          <span class="format-badge">TXT</span>
+          <span class="format-badge">JPG</span>
+          <span class="format-limit">&le; 5 MB</span>
+        </div>
+      </div>
+
+      <!-- Contract-type hints (informational context pills) -->
+      <div class="contract-types-bar" aria-label="Supported agreement types">
+        <span class="types-bar-label">Supported contracts:</span>
+        <div class="type-pills">
+          <span class="type-pill" title="Analyzes non-compete, IP assignment, notice period, severance">Employment offer</span>
+          <span class="type-pill" title="Analyzes security deposit, escalation clause, lock-in, quiet enjoyment">Rental agreement</span>
+          <span class="type-pill" title="Analyzes IP transfer timing, payment milestones, scope creep, kill fees">Freelance SOW</span>
+        </div>
+      </div>
 
       <div class="input-tabs" role="tablist" aria-label="Input method">
         <button id="tab-file-btn" class="input-tab" role="tab" aria-selected="true" aria-controls="tab-file">Upload file</button>
@@ -63,11 +99,14 @@
         <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-label="Drop a contract file here or click to browse">
           <input type="file" id="file-input" class="visually-hidden" accept=".pdf,.docx,.jpg,.jpeg,.txt">
           <div class="drop-zone-content">
-            <svg class="upload-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 16V4M12 4l-4 4M12 4l4 4" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M4 17v2a1 1 0 001 1h14a1 1 0 001-1v-2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <p class="drop-prompt">Drop your file here or <span class="browse-link">browse</span></p>
+            <div class="upload-icon-wrapper">
+              <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                <path d="M12 16V4M12 4l-4 4M12 4l4 4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4 17v2a1 1 0 001 1h14a1 1 0 001-1v-2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <p class="drop-prompt">Drop your contract file here or <span class="browse-link">browse</span></p>
+            <p class="drop-subprompt">Documents are parsed in-memory and never stored on disk or server databases</p>
           </div>
           <div id="selected-file-name" class="selected-file-display" aria-live="polite"></div>
         </div>
@@ -75,29 +114,33 @@
 
       <!-- Paste text tab -->
       <div id="tab-text" class="tab-panel" role="tabpanel" aria-labelledby="tab-text-btn" hidden>
-        <label for="pasted-text" class="paste-label">Paste your contract clauses or full agreement text below</label>
-        <textarea id="pasted-text" class="paste-area" rows="8" placeholder="Paste contract terms here..."></textarea>
+        <label for="pasted-text" class="paste-label">Paste contract clauses or full agreement text below</label>
+        <textarea id="pasted-text" class="paste-area" rows="6" placeholder="Paste contract terms here (e.g., employment offer letters, lease agreements, or freelance service contracts)..."></textarea>
       </div>
 
       <div class="action-bar">
+        <div class="action-meta">
+          <span class="meta-dot"></span>
+          <span>Zero persistence &bull; Ephemeral session memory</span>
+        </div>
         <button id="btn-classify" class="btn btn-primary" type="button">Analyze document</button>
       </div>
 
       <div id="input-error" class="alert alert-error" role="alert" aria-live="assertive" hidden></div>
     </section>
 
-    <!-- LOADING -->
+    <!-- LOADING STATE -->
     <div id="loading-spinner" class="loading-state" role="status" aria-live="polite" hidden>
       <div class="spinner" aria-hidden="true"></div>
       <p id="loading-text" class="loading-text">Analyzing document structure...</p>
     </div>
 
     <!-- STEP 2: Confirmation -->
-    <section id="confirmation-section" class="panel" aria-labelledby="confirm-heading" hidden>
+    <section id="confirmation-section" class="panel confirm-panel" aria-labelledby="confirm-heading" hidden>
       <div class="confirmation-header">
         <div>
           <h2 id="confirm-heading" class="panel-heading">Document type detected</h2>
-          <p class="panel-note">Verify or adjust the detected category before extraction begins.</p>
+          <p class="panel-note">Verify or adjust the detected category before deterministic rule evaluation begins.</p>
         </div>
       </div>
 
@@ -154,7 +197,7 @@
         </div>
       </div>
 
-      <!-- Summary -->
+      <!-- Plain-language summary -->
       <section class="panel" aria-labelledby="summary-heading">
         <h3 id="summary-heading" class="card-title">Plain-language summary</h3>
         <p id="report-summary-text" class="summary-body">Summary text will appear here.</p>
@@ -191,7 +234,7 @@
   </main>
 
   <footer class="app-footer">
-    <div class="page-column footer-inner">
+    <div class="footer-inner">
       <p class="footer-brand">{{ app_name }} — Built for the <em>Legal Information Accessibility</em> challenge.</p>
       <p class="footer-note">{{ disclaimer }}</p>
     </div>
