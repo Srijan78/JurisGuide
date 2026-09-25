@@ -130,13 +130,13 @@
     </section>
 
     <!-- LOADING STATE -->
-    <div id="loading-spinner" class="loading-state" role="status" aria-live="polite" hidden>
+    <div id="loading-spinner" class="loading-state" role="status" aria-live="polite" hidden style="display: none;">
       <div class="spinner" aria-hidden="true"></div>
       <p id="loading-text" class="loading-text">Analyzing document structure...</p>
     </div>
 
     <!-- STEP 2: Confirmation -->
-    <section id="confirmation-section" class="panel confirm-panel" aria-labelledby="confirm-heading" hidden>
+    <section id="confirmation-section" class="panel confirm-panel" aria-labelledby="confirm-heading" hidden style="display: none;">
       <div class="confirmation-header">
         <div>
           <h2 id="confirm-heading" class="panel-heading">Document type detected</h2>
@@ -180,7 +180,7 @@
     </section>
 
     <!-- STEP 3: Results -->
-    <section id="results-section" class="results-container" aria-labelledby="report-heading" hidden>
+    <section id="results-section" class="results-container" aria-labelledby="report-heading" hidden style="display: none;">
       <!-- Report header -->
       <div class="report-header panel">
         <div class="report-title-area">

@@ -61,6 +61,15 @@
   padding: 0;
 }
 
+/* Ensure hidden elements are strictly hidden regardless of component display rules */
+[hidden],
+.loading-state[hidden],
+.panel[hidden],
+.tab-panel[hidden],
+.alert[hidden] {
+  display: none !important;
+}
+
 html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
@@ -697,6 +706,10 @@ body {
   justify-content: center;
   padding: 3.5rem 1rem;
   gap: 1rem;
+}
+
+.loading-state[hidden] {
+  display: none !important;
 }
 
 .spinner {

@@ -58,6 +58,57 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedFile = null;
   let currentSessionId = null;
 
+  // ----- Loading & Section Visibility Helpers -----
+  function showLoading(text) {
+    if (loadingSpinner) {
+      loadingSpinner.removeAttribute("hidden");
+      loadingSpinner.style.display = "flex";
+    }
+    if (loadingText) {
+      loadingText.textContent = text || "Processing document...";
+    }
+  }
+
+  function hideLoading() {
+    if (loadingSpinner) {
+      loadingSpinner.setAttribute("hidden", "true");
+      loadingSpinner.style.display = "none";
+    }
+  }
+
+  function showSection(activeSec) {
+    const allSections = [inputSection, confirmationSection, resultsSection];
+    allSections.forEach((sec) => {
+      if (!sec) return;
+      if (sec === activeSec) {
+        sec.removeAttribute("hidden");
+        sec.style.display = "";
+      } else {
+        sec.setAttribute("hidden", "true");
+        sec.style.display = "none";
+      }
+    });
+  }
+
+  // ----- Timeout-enabled fetch helper -----
+  async function fetchWithTimeout(resource, options = {}, timeoutMs = 60000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(resource, {
+        ...options,
+        signal: controller.signal,
+      });
+    } catch (err) {
+      if (err.name === "AbortError") {
+        throw new Error("Request timed out. The server took longer than expected to process your document. Please try again.");
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   // ----- Progress indicator -----
   function setProgress(step) {
     progressSegments.forEach((seg) => {
@@ -72,6 +123,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Initialize visibility cleanly
+  hideLoading();
+  showSection(inputSection);
   setProgress(1);
 
   // ----- Tab navigation -----
@@ -85,15 +139,19 @@ document.addEventListener("DOMContentLoaded", () => {
       tabFileBtn.setAttribute("aria-selected", "true");
       tabTextBtn.setAttribute("aria-selected", "false");
       tabFile.removeAttribute("hidden");
+      tabFile.style.display = "";
       tabFile.classList.add("active");
       tabText.setAttribute("hidden", "true");
+      tabText.style.display = "none";
       tabText.classList.remove("active");
     } else {
       tabTextBtn.setAttribute("aria-selected", "true");
       tabFileBtn.setAttribute("aria-selected", "false");
       tabText.removeAttribute("hidden");
+      tabText.style.display = "";
       tabText.classList.add("active");
       tabFile.setAttribute("hidden", "true");
+      tabFile.style.display = "none";
       tabFile.classList.remove("active");
     }
   }
@@ -139,11 +197,13 @@ document.addEventListener("DOMContentLoaded", () => {
   function showError(msg) {
     inputError.textContent = msg;
     inputError.removeAttribute("hidden");
+    inputError.style.display = "block";
   }
 
   function clearError() {
     inputError.textContent = "";
     inputError.setAttribute("hidden", "true");
+    inputError.style.display = "none";
   }
 
   // ----- Step 1: Detect document type -----
@@ -166,16 +226,16 @@ document.addEventListener("DOMContentLoaded", () => {
       formData.append("text_content", text);
     }
 
-    inputSection.setAttribute("hidden", "true");
-    loadingSpinner.removeAttribute("hidden");
-    loadingText.textContent = "Classifying document type...";
+    // Hide input section and show spinner
+    showSection(null);
+    showLoading("Classifying document structure...");
     setProgress(2);
 
     try {
-      const response = await fetch("/api/classify", {
+      const response = await fetchWithTimeout("/api/classify", {
         method: "POST",
         body: formData,
-      });
+      }, 45000);
 
       const data = await response.json();
       if (!response.ok || !data.success) {
@@ -189,39 +249,38 @@ document.addEventListener("DOMContentLoaded", () => {
       confirmReason.textContent = data.summary_reason || "Based on document content.";
       categoryOverride.value = data.detected_type;
 
-      loadingSpinner.setAttribute("hidden", "true");
-      confirmationSection.removeAttribute("hidden");
+      hideLoading();
+      showSection(confirmationSection);
       setProgress(3);
     } catch (err) {
-      loadingSpinner.setAttribute("hidden", "true");
-      inputSection.removeAttribute("hidden");
+      hideLoading();
+      showSection(inputSection);
       setProgress(1);
       showError(err.message || "An error occurred during classification.");
     }
   });
 
   btnCancelConfirm.addEventListener("click", () => {
-    confirmationSection.setAttribute("hidden", "true");
-    inputSection.removeAttribute("hidden");
+    hideLoading();
+    showSection(inputSection);
     setProgress(1);
   });
 
   // ----- Step 2: Confirm and run analysis -----
   btnConfirmAnalyze.addEventListener("click", async () => {
     const confirmedType = categoryOverride.value;
-    confirmationSection.setAttribute("hidden", "true");
-    loadingSpinner.removeAttribute("hidden");
-    loadingText.textContent = "Extracting clauses and applying risk rules...";
+    showSection(null);
+    showLoading("Extracting clauses and applying deterministic risk rules...");
 
     try {
-      const response = await fetch("/api/analyze", {
+      const response = await fetchWithTimeout("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           session_id: currentSessionId,
           confirmed_type: confirmedType,
         }),
-      });
+      }, 75000);
 
       const report = await response.json();
       if (!response.ok) {
@@ -229,12 +288,12 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       renderReport(report);
-      loadingSpinner.setAttribute("hidden", "true");
-      resultsSection.removeAttribute("hidden");
+      hideLoading();
+      showSection(resultsSection);
       setProgress(4);
     } catch (err) {
-      loadingSpinner.setAttribute("hidden", "true");
-      confirmationSection.removeAttribute("hidden");
+      hideLoading();
+      showSection(confirmationSection);
       setProgress(3);
       alert(err.message || "Failed to analyze document.");
     }
@@ -242,99 +301,108 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ----- Render report -----
   function renderReport(report) {
-    // Risk badge
-    const riskLevel = report.overall_risk_level || "general";
-    reportRiskBadge.textContent = `${riskLevel} risk`;
-    reportRiskBadge.className = `badge-posture badge-posture-${riskLevel.toLowerCase()}`;
-    reportDocTitle.textContent = `${report.document_title || "Document"} — ${formatCategoryLabel(report.document_type)}`;
+    try {
+      // Risk badge
+      const riskLevel = report.overall_risk_level || "general";
+      reportRiskBadge.textContent = `${riskLevel} risk`;
+      reportRiskBadge.className = `badge-posture badge-posture-${riskLevel.toLowerCase()}`;
+      reportDocTitle.textContent = `${report.document_title || "Document"} — ${formatCategoryLabel(report.document_type)}`;
 
-    // Stats
-    statHigh.textContent = report.stats.high_risks || 0;
-    statMed.textContent = report.stats.medium_risks || 0;
-    statMissing.textContent = report.stats.missing_clauses || 0;
+      // Stats
+      statHigh.textContent = (report.stats && report.stats.high_risks) || 0;
+      statMed.textContent = (report.stats && report.stats.medium_risks) || 0;
+      statMissing.textContent = (report.stats && report.stats.missing_clauses) || 0;
 
-    // Summary
-    reportSummaryText.textContent = report.summary;
+      // Summary
+      reportSummaryText.textContent = report.summary || "Analysis complete.";
 
-    // Risk items
-    risksList.innerHTML = "";
-    if (report.risk_items.length === 0) {
-      risksList.innerHTML = "<p style='color: var(--slate); font-size: 0.9rem;'>No major risk thresholds breached under current configuration.</p>";
-    } else {
-      report.risk_items.forEach((risk) => {
-        const item = document.createElement("article");
-        item.className = `risk-card severity-${risk.severity.toLowerCase()}`;
-        item.innerHTML = `
-          <div class="risk-card-header">
-            <h4 class="risk-card-title">${escapeHtml(risk.title)}</h4>
-            <span class="risk-badge badge-${risk.severity.toLowerCase()}" role="status">${risk.severity} risk</span>
-          </div>
-          <p class="risk-explanation">${escapeHtml(risk.explanation)}</p>
-          <div class="risk-recom">
-            <strong>Recommendation:</strong> ${escapeHtml(risk.recommendation)}
-          </div>
-          ${
-            risk.raw_text
-              ? `
-              <details class="raw-text-details">
-                <summary class="raw-text-summary">View verbatim clause text from contract</summary>
-                <pre class="raw-text-block">${escapeHtml(risk.raw_text)}</pre>
-              </details>
-            `
-              : ""
-          }
-        `;
-        risksList.appendChild(item);
-      });
+      // Risk items
+      risksList.innerHTML = "";
+      if (!report.risk_items || report.risk_items.length === 0) {
+        risksList.innerHTML = "<p style='color: var(--slate); font-size: 0.9rem;'>No major risk thresholds breached under current configuration.</p>";
+      } else {
+        report.risk_items.forEach((risk) => {
+          const item = document.createElement("article");
+          item.className = `risk-card severity-${risk.severity.toLowerCase()}`;
+          item.innerHTML = `
+            <div class="risk-card-header">
+              <h4 class="risk-card-title">${escapeHtml(risk.title)}</h4>
+              <span class="risk-badge badge-${risk.severity.toLowerCase()}" role="status">${risk.severity} risk</span>
+            </div>
+            <p class="risk-explanation">${escapeHtml(risk.explanation)}</p>
+            <div class="risk-recom">
+              <strong>Recommendation:</strong> ${escapeHtml(risk.recommendation)}
+            </div>
+            ${
+              risk.raw_text
+                ? `
+                <details class="raw-text-details">
+                  <summary class="raw-text-summary">View verbatim clause text from contract</summary>
+                  <pre class="raw-text-block">${escapeHtml(risk.raw_text)}</pre>
+                </details>
+              `
+                : ""
+            }
+          `;
+          risksList.appendChild(item);
+        });
+      }
+
+      // Missing clauses
+      missingList.innerHTML = "";
+      if (!report.missing_clauses || report.missing_clauses.length === 0) {
+        missingSection.setAttribute("hidden", "true");
+        missingSection.style.display = "none";
+      } else {
+        missingSection.removeAttribute("hidden");
+        missingSection.style.display = "";
+        report.missing_clauses.forEach((missing) => {
+          const item = document.createElement("article");
+          item.className = "missing-card";
+          item.innerHTML = `
+            <h4 class="missing-title">Absent: ${escapeHtml(missing.clause_name)}</h4>
+            <p class="missing-desc">${escapeHtml(missing.explanation)}</p>
+            <div class="risk-recom">
+              <strong>Recommendation:</strong> ${escapeHtml(missing.recommendation)}
+            </div>
+          `;
+          missingList.appendChild(item);
+        });
+      }
+
+      // Checklist
+      checklistItems.innerHTML = "";
+      if (report.checklist && report.checklist.length > 0) {
+        report.checklist.forEach((q, idx) => {
+          const li = document.createElement("li");
+          li.className = "checklist-item";
+          li.innerHTML = `
+            <input type="checkbox" id="check-${idx}" class="checklist-item-check" aria-label="Mark question as resolved">
+            <div>
+              <div class="checklist-item-target">${escapeHtml(q.category)}</div>
+              <label for="check-${idx}" class="checklist-item-text">${escapeHtml(q.question)}</label>
+            </div>
+          `;
+          checklistItems.appendChild(li);
+        });
+      }
+
+      // Copy button
+      btnCopyChecklist.onclick = () => {
+        if (!report.checklist) return;
+        const questionsText = report.checklist
+          .map((q, i) => `${i + 1}. [${q.category}] ${q.question}`)
+          .join("\n\n");
+        navigator.clipboard.writeText(questionsText).then(() => {
+          btnCopyChecklist.textContent = "Copied";
+          setTimeout(() => {
+            btnCopyChecklist.textContent = "Copy questions";
+          }, 2000);
+        });
+      };
+    } catch (renderErr) {
+      console.error("Error during report rendering:", renderErr);
     }
-
-    // Missing clauses
-    missingList.innerHTML = "";
-    if (report.missing_clauses.length === 0) {
-      missingSection.setAttribute("hidden", "true");
-    } else {
-      missingSection.removeAttribute("hidden");
-      report.missing_clauses.forEach((missing) => {
-        const item = document.createElement("article");
-        item.className = "missing-card";
-        item.innerHTML = `
-          <h4 class="missing-title">Absent: ${escapeHtml(missing.clause_name)}</h4>
-          <p class="missing-desc">${escapeHtml(missing.explanation)}</p>
-          <div class="risk-recom">
-            <strong>Recommendation:</strong> ${escapeHtml(missing.recommendation)}
-          </div>
-        `;
-        missingList.appendChild(item);
-      });
-    }
-
-    // Checklist
-    checklistItems.innerHTML = "";
-    report.checklist.forEach((q, idx) => {
-      const li = document.createElement("li");
-      li.className = "checklist-item";
-      li.innerHTML = `
-        <input type="checkbox" id="check-${idx}" class="checklist-item-check" aria-label="Mark question as resolved">
-        <div>
-          <div class="checklist-item-target">${escapeHtml(q.category)}</div>
-          <label for="check-${idx}" class="checklist-item-text">${escapeHtml(q.question)}</label>
-        </div>
-      `;
-      checklistItems.appendChild(li);
-    });
-
-    // Copy button
-    btnCopyChecklist.onclick = () => {
-      const questionsText = report.checklist
-        .map((q, i) => `${i + 1}. [${q.category}] ${q.question}`)
-        .join("\n\n");
-      navigator.clipboard.writeText(questionsText).then(() => {
-        btnCopyChecklist.textContent = "Copied";
-        setTimeout(() => {
-          btnCopyChecklist.textContent = "Copy questions";
-        }, 2000);
-      });
-    };
   }
 
   // ----- Reset -----
@@ -344,9 +412,8 @@ document.addEventListener("DOMContentLoaded", () => {
     fileInput.value = "";
     selectedFileName.textContent = "";
     pastedText.value = "";
-    resultsSection.setAttribute("hidden", "true");
-    confirmationSection.setAttribute("hidden", "true");
-    inputSection.removeAttribute("hidden");
+    hideLoading();
+    showSection(inputSection);
     setProgress(1);
   });
 
