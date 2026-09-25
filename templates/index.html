@@ -3,182 +3,195 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ app_name }} — Multi-Document Legal Contract Analyzer</title>
-  <meta name="description" content="A GenAI-assisted legal contract analyzer for employment offers, rental leases, and freelance contracts with deterministic risk scoring.">
+  <title>{{ app_name }} — Contract risk analysis</title>
+  <meta name="description" content="Automated clause-level risk analysis for employment offers, rental agreements, and freelance contracts. Flags risky clauses, detects missing protections, and generates negotiation checklists.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
   <!-- Skip link for keyboard accessibility -->
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
-  <!-- Top Legal Disclaimer Banner -->
-  <aside class="disclaimer-banner" role="note" aria-label="Legal Notice">
-    <div class="container banner-inner">
-      <span class="banner-icon" aria-hidden="true">⚖️</span>
-      <p class="banner-text">
-        <strong>Informational Assistant Only:</strong> {{ disclaimer }}
-      </p>
-    </div>
+  <!-- Disclaimer banner — quiet inset notice -->
+  <aside class="disclaimer-banner" role="note" aria-label="Legal disclaimer">
+    <p class="banner-text">Informational only — JurisGuide does not provide legal advice and does not replace a licensed professional.</p>
   </aside>
 
+  <!-- Header — wordmark + tagline -->
   <header class="app-header">
-    <div class="container header-inner">
-      <div class="brand">
-        <h1 class="logo-title">{{ app_name }}</h1>
-        <span class="badge badge-subtle">v{{ version }}</span>
+    <div class="page-column">
+      <div class="brand-line">
+        <h1 class="wordmark">JurisGuide</h1>
+        <span class="version-tag">v{{ version }}</span>
       </div>
-      <p class="tagline">Deterministic risk analysis for everyday contracts: Employment, Rental, and Freelance.</p>
+      <p class="tagline">Automated clause-level risk analysis for employment offers, rental agreements, and freelance contracts.</p>
     </div>
   </header>
 
-  <main id="main-content" class="container">
-    <!-- STEP 1: Upload / Input Section -->
-    <section id="input-section" class="panel card" aria-labelledby="input-heading">
-      <h2 id="input-heading" class="section-title">Upload or Paste Your Contract</h2>
-      <p class="section-subtitle">Supports PDF, DOCX, JPG, and Plain Text (Max 5MB). Files are processed in ephemeral memory and never stored.</p>
+  <main id="main-content" class="page-column">
 
-      <div class="tabs" role="tablist" aria-label="Input Method">
-        <button id="tab-file-btn" class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-file">File Upload</button>
-        <button id="tab-text-btn" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-text">Paste Text</button>
+    <!-- Progress indicator — 4-step thin segmented bar -->
+    <nav class="progress-track" aria-label="Analysis progress">
+      <div class="progress-segments">
+        <div class="progress-segment active" data-step="1"></div>
+        <div class="progress-segment" data-step="2"></div>
+        <div class="progress-segment" data-step="3"></div>
+        <div class="progress-segment" data-step="4"></div>
+      </div>
+      <div class="progress-labels">
+        <span class="progress-label active" data-step="1">Upload</span>
+        <span class="progress-label" data-step="2">Detect type</span>
+        <span class="progress-label" data-step="3">Confirm</span>
+        <span class="progress-label" data-step="4">Results</span>
+      </div>
+    </nav>
+
+    <!-- STEP 1: Upload panel -->
+    <section id="input-section" class="panel" aria-labelledby="input-heading">
+      <h2 id="input-heading" class="panel-heading">Upload your contract</h2>
+      <p class="panel-note">Supported formats: PDF, DOCX, JPG, and plain text (max 5 MB). Files are processed in memory only and never stored.</p>
+
+      <div class="input-tabs" role="tablist" aria-label="Input method">
+        <button id="tab-file-btn" class="input-tab" role="tab" aria-selected="true" aria-controls="tab-file">Upload file</button>
+        <button id="tab-text-btn" class="input-tab" role="tab" aria-selected="false" aria-controls="tab-text">Paste text</button>
       </div>
 
-      <!-- File Upload Tab -->
+      <!-- File upload tab -->
       <div id="tab-file" class="tab-panel active" role="tabpanel" aria-labelledby="tab-file-btn">
-        <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-label="Click or drag and drop a contract file here to upload">
+        <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-label="Drop a contract file here or click to browse">
           <input type="file" id="file-input" class="visually-hidden" accept=".pdf,.docx,.jpg,.jpeg,.txt">
           <div class="drop-zone-content">
-            <span class="drop-icon" aria-hidden="true">📄</span>
-            <p class="drop-prompt"><strong>Click to select a file</strong> or drag and drop here</p>
-            <p class="drop-hint">PDF, DOCX, JPG, or TXT (Up to 5MB)</p>
+            <svg class="upload-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 16V4M12 4l-4 4M12 4l4 4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M4 17v2a1 1 0 001 1h14a1 1 0 001-1v-2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <p class="drop-prompt">Drop your file here or <span class="browse-link">browse</span></p>
           </div>
-          <div id="selected-file-name" class="selected-file" aria-live="polite"></div>
+          <div id="selected-file-name" class="selected-file-display" aria-live="polite"></div>
         </div>
       </div>
 
-      <!-- Paste Text Tab -->
+      <!-- Paste text tab -->
       <div id="tab-text" class="tab-panel" role="tabpanel" aria-labelledby="tab-text-btn" hidden>
-        <label for="pasted-text" class="input-label">Paste contract clauses or full agreement:</label>
-        <textarea id="pasted-text" class="text-area" rows="8" placeholder="Paste your contract terms, clauses, or agreement text here..."></textarea>
+        <label for="pasted-text" class="paste-label">Paste your contract clauses or full agreement text below</label>
+        <textarea id="pasted-text" class="paste-area" rows="8" placeholder="Paste contract terms here..."></textarea>
       </div>
 
       <div class="action-bar">
-        <button id="btn-classify" class="btn btn-primary" type="button">
-          <span class="btn-text">Step 1: Detect Document Type</span>
-        </button>
+        <button id="btn-classify" class="btn btn-primary" type="button">Analyze document</button>
       </div>
 
       <div id="input-error" class="alert alert-error" role="alert" aria-live="assertive" hidden></div>
     </section>
 
-    <!-- LOADING INDICATOR -->
+    <!-- LOADING -->
     <div id="loading-spinner" class="loading-state" role="status" aria-live="polite" hidden>
       <div class="spinner" aria-hidden="true"></div>
       <p id="loading-text" class="loading-text">Analyzing document structure...</p>
     </div>
 
-    <!-- STEP 2: Confirmation & Override Modal / View -->
-    <section id="confirmation-section" class="panel card" aria-labelledby="confirm-heading" hidden>
+    <!-- STEP 2: Confirmation -->
+    <section id="confirmation-section" class="panel" aria-labelledby="confirm-heading" hidden>
       <div class="confirmation-header">
-        <span class="confirm-icon" aria-hidden="true">🔍</span>
         <div>
-          <h2 id="confirm-heading" class="section-title">Document Classification Detected</h2>
-          <p class="section-subtitle">Please verify or manually adjust the detected category before in-depth extraction.</p>
+          <h2 id="confirm-heading" class="panel-heading">Document type detected</h2>
+          <p class="panel-note">Verify or adjust the detected category before extraction begins.</p>
         </div>
       </div>
 
       <div class="detected-box">
         <div class="detected-row">
-          <span class="meta-label">Document Name:</span>
-          <span id="confirm-filename" class="meta-val font-mono">sample.pdf</span>
+          <span class="meta-label">Filename</span>
+          <span id="confirm-filename" class="meta-val font-mono">document.pdf</span>
         </div>
         <div class="detected-row">
-          <span class="meta-label">AI Detected Type:</span>
-          <span id="confirm-detected-label" class="meta-val highlight">Employment Offer Letter</span>
+          <span class="meta-label">Detected type</span>
+          <span id="confirm-detected-label" class="meta-val highlight">Employment offer</span>
         </div>
         <div class="detected-row">
-          <span class="meta-label">Model Confidence:</span>
+          <span class="meta-label">Confidence</span>
           <span id="confirm-confidence" class="meta-val">95%</span>
         </div>
         <div class="detected-row">
-          <span class="meta-label">Key Clues Found:</span>
-          <span id="confirm-reason" class="meta-val text-muted">Contains compensation breakdown and notice period clauses.</span>
+          <span class="meta-label">Key indicators</span>
+          <span id="confirm-reason" class="meta-val" style="color: var(--slate); font-weight: 400;">Based on document content.</span>
         </div>
       </div>
 
       <div class="override-box">
-        <label for="category-override" class="input-label">Confirm or Override Category:</label>
+        <label for="category-override" class="input-label">Confirm or override category</label>
         <select id="category-override" class="select-input">
-          <option value="employment_offer">Employment Offer Letter (Bond, notice, non-compete)</option>
-          <option value="rental_agreement">Rental / Lease Agreement (Deposit, lock-in, repairs)</option>
-          <option value="freelance_contract">Freelance / Service Contract (IP timing, kill fee, net days)</option>
-          <option value="other">Other Legal Document (General Summary Fallback)</option>
+          <option value="employment_offer">Employment offer (bond, notice, non-compete)</option>
+          <option value="rental_agreement">Rental / lease agreement (deposit, lock-in, repairs)</option>
+          <option value="freelance_contract">Freelance / service contract (IP timing, kill fee, net days)</option>
+          <option value="other">Other legal document (general fallback analysis)</option>
         </select>
       </div>
 
       <div class="action-bar confirm-actions">
         <button id="btn-cancel-confirm" class="btn btn-secondary" type="button">Back</button>
-        <button id="btn-confirm-analyze" class="btn btn-primary" type="button">
-          <span class="btn-text">Confirm &amp; Run Risk Analysis</span>
-        </button>
+        <button id="btn-confirm-analyze" class="btn btn-primary" type="button">Run risk analysis</button>
       </div>
     </section>
 
-    <!-- STEP 3: Report & Results View -->
+    <!-- STEP 3: Results -->
     <section id="results-section" class="results-container" aria-labelledby="report-heading" hidden>
-      <!-- Report Header -->
-      <div class="report-header card">
+      <!-- Report header -->
+      <div class="report-header panel">
         <div class="report-title-area">
-          <span id="report-risk-badge" class="badge-posture badge-posture-high" role="status" aria-label="Risk Posture">HIGH RISK</span>
+          <span id="report-risk-badge" class="badge-posture badge-posture-high" role="status" aria-label="Risk posture">High risk</span>
           <div>
-            <h2 id="report-heading" class="report-title">Contract Risk Assessment</h2>
-            <p id="report-doc-title" class="report-subtitle">Document: Offer_Letter.pdf</p>
+            <h2 id="report-heading" class="report-title">Contract risk assessment</h2>
+            <p id="report-doc-title" class="report-subtitle">Document: contract.pdf</p>
           </div>
         </div>
         <div class="report-quick-stats">
-          <div class="stat-pill"><span id="stat-high" class="stat-num stat-high">0</span> <span class="stat-lbl">High Risks</span></div>
-          <div class="stat-pill"><span id="stat-med" class="stat-num stat-med">0</span> <span class="stat-lbl">Medium</span></div>
-          <div class="stat-pill"><span id="stat-missing" class="stat-num stat-missing">0</span> <span class="stat-lbl">Missing Clauses</span></div>
+          <div class="stat-pill"><span id="stat-high" class="stat-num stat-high">0</span> <span class="stat-lbl">high</span></div>
+          <div class="stat-pill"><span id="stat-med" class="stat-num stat-med">0</span> <span class="stat-lbl">medium</span></div>
+          <div class="stat-pill"><span id="stat-missing" class="stat-num stat-missing">0</span> <span class="stat-lbl">missing</span></div>
         </div>
       </div>
 
-      <!-- Plain Language Summary -->
-      <section class="card summary-card" aria-labelledby="summary-heading">
-        <h3 id="summary-heading" class="card-title"><span aria-hidden="true">📖</span> Plain-Language Summary</h3>
-        <p id="report-summary-text" class="summary-body">Summary text will be populated here.</p>
+      <!-- Summary -->
+      <section class="panel" aria-labelledby="summary-heading">
+        <h3 id="summary-heading" class="card-title">Plain-language summary</h3>
+        <p id="report-summary-text" class="summary-body">Summary text will appear here.</p>
       </section>
 
-      <!-- Flagged Risks List -->
-      <section class="card" aria-labelledby="risks-heading">
-        <h3 id="risks-heading" class="card-title"><span aria-hidden="true">⚠️</span> Identified Risk Findings</h3>
-        <p class="section-desc">Evaluated deterministically in code based on objective risk thresholds (not AI judgment).</p>
+      <!-- Flagged risks -->
+      <section class="panel" aria-labelledby="risks-heading">
+        <h3 id="risks-heading" class="card-title">Identified risk findings</h3>
+        <p class="section-desc">Evaluated deterministically by code against objective thresholds, not AI judgment.</p>
         <div id="risks-list" class="risks-list" role="list"></div>
       </section>
 
-      <!-- Missing Clauses Section -->
-      <section id="missing-section" class="card" aria-labelledby="missing-heading">
-        <h3 id="missing-heading" class="card-title"><span aria-hidden="true">❓</span> Absent or Unaddressed Expected Clauses</h3>
-        <p class="section-desc">Standard covenants expected in this document vertical that are not addressed in the text.</p>
+      <!-- Missing clauses -->
+      <section id="missing-section" class="panel" aria-labelledby="missing-heading">
+        <h3 id="missing-heading" class="card-title">Absent or unaddressed clauses</h3>
+        <p class="section-desc">Standard protections expected in this document type that are not present in the text.</p>
         <div id="missing-list" class="missing-list" role="list"></div>
       </section>
 
-      <!-- Actionable Questions Checklist -->
-      <section class="card checklist-card" aria-labelledby="checklist-heading">
+      <!-- Checklist -->
+      <section class="panel" aria-labelledby="checklist-heading">
         <div class="checklist-header">
-          <h3 id="checklist-heading" class="card-title"><span aria-hidden="true">📋</span> Questions for HR / Counterparty / Lawyer</h3>
-          <button id="btn-copy-checklist" class="btn btn-secondary btn-sm" type="button" aria-label="Copy checklist questions to clipboard">Copy Questions</button>
+          <h3 id="checklist-heading" class="card-title">Questions to ask before signing</h3>
+          <button id="btn-copy-checklist" class="btn btn-secondary btn-sm" type="button" aria-label="Copy checklist to clipboard">Copy questions</button>
         </div>
-        <p class="section-desc">Tailored questions informed by your specific contract terms to help you negotiate confidently.</p>
+        <p class="section-desc">Tailored questions generated from your specific contract terms.</p>
         <ul id="checklist-items" class="checklist-items"></ul>
       </section>
 
       <div class="reset-bar">
-        <button id="btn-reset" class="btn btn-secondary" type="button">Analyze Another Document</button>
+        <button id="btn-reset" class="btn btn-secondary" type="button">Analyze another document</button>
       </div>
     </section>
   </main>
 
   <footer class="app-footer">
-    <div class="container footer-inner">
+    <div class="page-column footer-inner">
       <p class="footer-brand">{{ app_name }} — Built for the <em>Legal Information Accessibility</em> challenge.</p>
       <p class="footer-note">{{ disclaimer }}</p>
     </div>

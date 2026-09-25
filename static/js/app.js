@@ -1,13 +1,13 @@
 /**
- * JurisGuide Client Application Logic
+ * JurisGuide — Client Application Logic
  *
- * Implements accessible, keyboard-friendly two-step workflow:
- * Step 1: Ingest document & detect category (Gemini Call 1)
- * Step 2: Confirm or manually override category -> Extract & Analyze (Gemini Call 2 + Code Rules)
+ * Two-step workflow:
+ * Step 1: Ingest document, detect category (Gemini Call 1)
+ * Step 2: Confirm or override category, extract and analyze (Gemini Call 2 + deterministic rules)
  */
 
 document.addEventListener("DOMContentLoaded", () => {
-  // DOM Elements
+  // DOM — Input
   const tabFileBtn = document.getElementById("tab-file-btn");
   const tabTextBtn = document.getElementById("tab-text-btn");
   const tabFile = document.getElementById("tab-file");
@@ -19,12 +19,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnClassify = document.getElementById("btn-classify");
   const inputError = document.getElementById("input-error");
 
+  // DOM — Sections
   const inputSection = document.getElementById("input-section");
   const loadingSpinner = document.getElementById("loading-spinner");
   const loadingText = document.getElementById("loading-text");
   const confirmationSection = document.getElementById("confirmation-section");
   const resultsSection = document.getElementById("results-section");
 
+  // DOM — Confirmation
   const confirmFilename = document.getElementById("confirm-filename");
   const confirmDetectedLabel = document.getElementById("confirm-detected-label");
   const confirmConfidence = document.getElementById("confirm-confidence");
@@ -33,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnCancelConfirm = document.getElementById("btn-cancel-confirm");
   const btnConfirmAnalyze = document.getElementById("btn-confirm-analyze");
 
+  // DOM — Results
   const reportRiskBadge = document.getElementById("report-risk-badge");
   const reportDocTitle = document.getElementById("report-doc-title");
   const statHigh = document.getElementById("stat-high");
@@ -46,14 +49,32 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnCopyChecklist = document.getElementById("btn-copy-checklist");
   const btnReset = document.getElementById("btn-reset");
 
+  // DOM — Progress
+  const progressSegments = document.querySelectorAll(".progress-segment");
+  const progressLabels = document.querySelectorAll(".progress-label");
+
   // State
   let activeTab = "file";
   let selectedFile = null;
   let currentSessionId = null;
 
-  // -------------------------------------------------------------
-  // Tabs Navigation (Accessible)
-  // -------------------------------------------------------------
+  // ----- Progress indicator -----
+  function setProgress(step) {
+    progressSegments.forEach((seg) => {
+      const s = parseInt(seg.dataset.step);
+      seg.classList.toggle("active", s === step);
+      seg.classList.toggle("completed", s < step);
+    });
+    progressLabels.forEach((lbl) => {
+      const s = parseInt(lbl.dataset.step);
+      lbl.classList.toggle("active", s === step);
+      lbl.classList.toggle("completed", s < step);
+    });
+  }
+
+  setProgress(1);
+
+  // ----- Tab navigation -----
   tabFileBtn.addEventListener("click", () => switchTab("file"));
   tabTextBtn.addEventListener("click", () => switchTab("text"));
 
@@ -61,21 +82,15 @@ document.addEventListener("DOMContentLoaded", () => {
     activeTab = tab;
     clearError();
     if (tab === "file") {
-      tabFileBtn.classList.add("active");
       tabFileBtn.setAttribute("aria-selected", "true");
-      tabTextBtn.classList.remove("active");
       tabTextBtn.setAttribute("aria-selected", "false");
-
       tabFile.removeAttribute("hidden");
       tabFile.classList.add("active");
       tabText.setAttribute("hidden", "true");
       tabText.classList.remove("active");
     } else {
-      tabTextBtn.classList.add("active");
       tabTextBtn.setAttribute("aria-selected", "true");
-      tabFileBtn.classList.remove("active");
       tabFileBtn.setAttribute("aria-selected", "false");
-
       tabText.removeAttribute("hidden");
       tabText.classList.add("active");
       tabFile.setAttribute("hidden", "true");
@@ -83,9 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // -------------------------------------------------------------
-  // Drag & Drop / File Input
-  // -------------------------------------------------------------
+  // ----- Drag and drop / file input -----
   dropZone.addEventListener("click", () => fileInput.click());
   dropZone.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -120,7 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function handleSelectedFile(file) {
     selectedFile = file;
     clearError();
-    selectedFileName.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    selectedFileName.textContent = `${file.name}  (${(file.size / 1024).toFixed(1)} KB)`;
   }
 
   function showError(msg) {
@@ -133,9 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
     inputError.setAttribute("hidden", "true");
   }
 
-  // -------------------------------------------------------------
-  // Step 1: Detect Document Type
-  // -------------------------------------------------------------
+  // ----- Step 1: Detect document type -----
   btnClassify.addEventListener("click", async () => {
     clearError();
     const formData = new FormData();
@@ -155,10 +166,10 @@ document.addEventListener("DOMContentLoaded", () => {
       formData.append("text_content", text);
     }
 
-    // Show loading state
     inputSection.setAttribute("hidden", "true");
     loadingSpinner.removeAttribute("hidden");
-    loadingText.textContent = "Classifying document type with Gemini...";
+    loadingText.textContent = "Classifying document type...";
+    setProgress(2);
 
     try {
       const response = await fetch("/api/classify", {
@@ -171,19 +182,20 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(data.message || "Failed to classify document.");
       }
 
-      // Populate Step 2 Confirmation screen
       currentSessionId = data.session_id;
       confirmFilename.textContent = data.filename;
       confirmDetectedLabel.textContent = formatCategoryLabel(data.detected_type);
       confirmConfidence.textContent = `${Math.round(data.confidence * 100)}%`;
-      confirmReason.textContent = data.summary_reason || "Based on contract text markers.";
+      confirmReason.textContent = data.summary_reason || "Based on document content.";
       categoryOverride.value = data.detected_type;
 
       loadingSpinner.setAttribute("hidden", "true");
       confirmationSection.removeAttribute("hidden");
+      setProgress(3);
     } catch (err) {
       loadingSpinner.setAttribute("hidden", "true");
       inputSection.removeAttribute("hidden");
+      setProgress(1);
       showError(err.message || "An error occurred during classification.");
     }
   });
@@ -191,16 +203,15 @@ document.addEventListener("DOMContentLoaded", () => {
   btnCancelConfirm.addEventListener("click", () => {
     confirmationSection.setAttribute("hidden", "true");
     inputSection.removeAttribute("hidden");
+    setProgress(1);
   });
 
-  // -------------------------------------------------------------
-  // Step 2: Confirm Category & Run Risk Analysis
-  // -------------------------------------------------------------
+  // ----- Step 2: Confirm and run analysis -----
   btnConfirmAnalyze.addEventListener("click", async () => {
     const confirmedType = categoryOverride.value;
     confirmationSection.setAttribute("hidden", "true");
     loadingSpinner.removeAttribute("hidden");
-    loadingText.textContent = "Extracting clauses and applying deterministic risk rules...";
+    loadingText.textContent = "Extracting clauses and applying risk rules...";
 
     try {
       const response = await fetch("/api/analyze", {
@@ -220,34 +231,35 @@ document.addEventListener("DOMContentLoaded", () => {
       renderReport(report);
       loadingSpinner.setAttribute("hidden", "true");
       resultsSection.removeAttribute("hidden");
+      setProgress(4);
     } catch (err) {
       loadingSpinner.setAttribute("hidden", "true");
       confirmationSection.removeAttribute("hidden");
+      setProgress(3);
       alert(err.message || "Failed to analyze document.");
     }
   });
 
-  // -------------------------------------------------------------
-  // Render Analysis Report
-  // -------------------------------------------------------------
+  // ----- Render report -----
   function renderReport(report) {
-    // Posture Badge
-    reportRiskBadge.textContent = `${report.overall_risk_level} RISK`;
-    reportRiskBadge.className = `badge-posture badge-posture-${report.overall_risk_level.toLowerCase()}`;
-    reportDocTitle.textContent = `Document: ${report.document_title} (${formatCategoryLabel(report.document_type)})`;
+    // Risk badge
+    const riskLevel = report.overall_risk_level || "general";
+    reportRiskBadge.textContent = `${riskLevel} risk`;
+    reportRiskBadge.className = `badge-posture badge-posture-${riskLevel.toLowerCase()}`;
+    reportDocTitle.textContent = `${report.document_title || "Document"} — ${formatCategoryLabel(report.document_type)}`;
 
     // Stats
     statHigh.textContent = report.stats.high_risks || 0;
     statMed.textContent = report.stats.medium_risks || 0;
     statMissing.textContent = report.stats.missing_clauses || 0;
 
-    // Plain Language Summary
+    // Summary
     reportSummaryText.textContent = report.summary;
 
-    // Identified Risks List
+    // Risk items
     risksList.innerHTML = "";
     if (report.risk_items.length === 0) {
-      risksList.innerHTML = "<p class='text-muted'>No major risk thresholds breached under current configuration.</p>";
+      risksList.innerHTML = "<p style='color: var(--slate); font-size: 0.9rem;'>No major risk thresholds breached under current configuration.</p>";
     } else {
       report.risk_items.forEach((risk) => {
         const item = document.createElement("article");
@@ -255,7 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.innerHTML = `
           <div class="risk-card-header">
             <h4 class="risk-card-title">${escapeHtml(risk.title)}</h4>
-            <span class="risk-badge badge-${risk.severity.toLowerCase()}" role="status">${risk.severity} RISK</span>
+            <span class="risk-badge badge-${risk.severity.toLowerCase()}" role="status">${risk.severity} risk</span>
           </div>
           <p class="risk-explanation">${escapeHtml(risk.explanation)}</p>
           <div class="risk-recom">
@@ -265,7 +277,7 @@ document.addEventListener("DOMContentLoaded", () => {
             risk.raw_text
               ? `
               <details class="raw-text-details">
-                <summary class="raw-text-summary">📄 View verbatim clause text from contract</summary>
+                <summary class="raw-text-summary">View verbatim clause text from contract</summary>
                 <pre class="raw-text-block">${escapeHtml(risk.raw_text)}</pre>
               </details>
             `
@@ -276,7 +288,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // Missing Clauses List
+    // Missing clauses
     missingList.innerHTML = "";
     if (report.missing_clauses.length === 0) {
       missingSection.setAttribute("hidden", "true");
@@ -296,7 +308,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // Actionable Checklist
+    // Checklist
     checklistItems.innerHTML = "";
     report.checklist.forEach((q, idx) => {
       const li = document.createElement("li");
@@ -311,21 +323,21 @@ document.addEventListener("DOMContentLoaded", () => {
       checklistItems.appendChild(li);
     });
 
-    // Copy Questions Button
+    // Copy button
     btnCopyChecklist.onclick = () => {
       const questionsText = report.checklist
         .map((q, i) => `${i + 1}. [${q.category}] ${q.question}`)
         .join("\n\n");
       navigator.clipboard.writeText(questionsText).then(() => {
-        btnCopyChecklist.textContent = "Copied!";
+        btnCopyChecklist.textContent = "Copied";
         setTimeout(() => {
-          btnCopyChecklist.textContent = "Copy Questions";
+          btnCopyChecklist.textContent = "Copy questions";
         }, 2000);
       });
     };
   }
 
-  // Reset Button
+  // ----- Reset -----
   btnReset.addEventListener("click", () => {
     selectedFile = null;
     currentSessionId = null;
@@ -335,14 +347,15 @@ document.addEventListener("DOMContentLoaded", () => {
     resultsSection.setAttribute("hidden", "true");
     confirmationSection.setAttribute("hidden", "true");
     inputSection.removeAttribute("hidden");
+    setProgress(1);
   });
 
   function formatCategoryLabel(cat) {
     const map = {
-      employment_offer: "Employment Offer Letter",
-      rental_agreement: "Rental / Lease Agreement",
-      freelance_contract: "Freelance / Service Contract",
-      other: "General Legal Document",
+      employment_offer: "Employment offer",
+      rental_agreement: "Rental / lease agreement",
+      freelance_contract: "Freelance / service contract",
+      other: "General legal document",
     };
     return map[cat] || "Contract";
   }

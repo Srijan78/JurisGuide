@@ -83,7 +83,7 @@ def test_homepage_and_static_assets_serve():
 
     css_res = client.get("/static/css/style.css")
     assert css_res.status_code == 200
-    assert "--bg-primary" in css_res.text
+    assert "--bg-page" in css_res.text
 
     js_res = client.get("/static/js/app.js")
     assert js_res.status_code == 200
