@@ -61,15 +61,8 @@ Output your decision strictly as a JSON object matching this schema:
 """
 
 
-_cached_client = None
-
-
 def _get_gemini_client():
-    """Lazily initialize and cache Google GenAI client for connection reuse."""
-    global _cached_client
-    if _cached_client is not None:
-        return _cached_client
-
+    """Lazily initialize Google GenAI client."""
     if not settings.gemini_api_key:
         logger.error("GEMINI_API_KEY is not configured in environment.")
         raise LLMServiceError(
@@ -78,8 +71,7 @@ def _get_gemini_client():
         )
     try:
         from google import genai
-        _cached_client = genai.Client(api_key=settings.gemini_api_key)
-        return _cached_client
+        return genai.Client(api_key=settings.gemini_api_key)
     except Exception as exc:
         logger.error("Failed to initialize Gemini client: %s", exc)
         raise LLMServiceError(
