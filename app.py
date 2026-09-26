@@ -46,9 +46,12 @@ app = FastAPI(
     description="GenAI Legal Contract Assistant for Legal Information Accessibility",
 )
 
-# Ensure directories exist and mount static files
-STATIC_DIR.mkdir(parents=True, exist_ok=True)
-TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
+# Ensure directories exist and mount static files (safely ignore read-only file systems)
+try:
+    STATIC_DIR.mkdir(parents=True, exist_ok=True)
+    TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    pass
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))

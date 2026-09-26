@@ -121,6 +121,16 @@ class FreelanceThresholds:
     max_included_revisions: int = FREELANCE_MAX_INCLUDED_REVISIONS
 
 
+def _safe_int_env(key: str, default: int) -> int:
+    val = os.getenv(key)
+    if not val or not val.strip():
+        return default
+    try:
+        return int(val.strip())
+    except (ValueError, TypeError):
+        return default
+
+
 @dataclass
 class Settings:
     """Application-wide settings and risk criteria."""
@@ -136,7 +146,7 @@ class Settings:
     gemini_fallback_model: str = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
 
     # Ephemeral Storage & Constraints
-    session_ttl_seconds: int = int(os.getenv("SESSION_TTL_SECONDS", "600"))
+    session_ttl_seconds: int = _safe_int_env("SESSION_TTL_SECONDS", 600)
     upstash_redis_rest_url: str = os.getenv("UPSTASH_REDIS_REST_URL", "")
     upstash_redis_rest_token: str = os.getenv("UPSTASH_REDIS_REST_TOKEN", "")
     max_upload_size_bytes: int = 5 * 1024 * 1024  # 5 MB
