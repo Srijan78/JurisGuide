@@ -40,11 +40,32 @@ class SessionExpiredError(JurisGuideError):
 
 class LLMServiceError(JurisGuideError):
     """Raised when the Gemini API encounters an error or quota exhaustion."""
-    def __init__(self, message: str = "AI service temporarily unavailable. Please try again later.") -> None:
-        super().__init__(message=message, status_code=503)
+    DEFAULT_USER_MESSAGE: str = "The AI service was temporarily unable to process the document. Please try again."
+
+    def __init__(
+        self,
+        message: Optional[str] = None,
+        internal_detail: Optional[str] = None,
+        status_code: int = 502,
+    ) -> None:
+        user_message = message or self.DEFAULT_USER_MESSAGE
+        super().__init__(message=user_message, status_code=status_code)
+        self.user_message = user_message
+        self.internal_detail = internal_detail or ""
 
 
 class SchemaExtractionError(JurisGuideError):
     """Raised when document data cannot be coerced into the required schema."""
-    def __init__(self, message: str = "Failed to extract structured clauses from document.", details: Optional[Dict[str, Any]] = None) -> None:
-        super().__init__(message=message, status_code=422, details=details)
+    DEFAULT_USER_MESSAGE: str = "Failed to extract structured clauses from document. Please try again."
+
+    def __init__(
+        self,
+        message: Optional[str] = None,
+        internal_detail: Optional[str] = None,
+        status_code: int = 422,
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        user_message = message or self.DEFAULT_USER_MESSAGE
+        super().__init__(message=user_message, status_code=status_code, details=details)
+        self.user_message = user_message
+        self.internal_detail = internal_detail or ""

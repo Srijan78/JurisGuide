@@ -64,12 +64,20 @@ Output your decision strictly as a JSON object matching this schema:
 def _get_gemini_client():
     """Lazily initialize Google GenAI client."""
     if not settings.gemini_api_key:
-        raise LLMServiceError("GEMINI_API_KEY is not configured in .env file.")
+        logger.error("GEMINI_API_KEY is not configured in environment.")
+        raise LLMServiceError(
+            message="The AI service is not configured.",
+            internal_detail="GEMINI_API_KEY is not configured in .env file."
+        )
     try:
         from google import genai
         return genai.Client(api_key=settings.gemini_api_key)
     except Exception as exc:
-        raise LLMServiceError(f"Failed to initialize Gemini client: {str(exc)}") from exc
+        logger.error("Failed to initialize Gemini client: %s", exc)
+        raise LLMServiceError(
+            message="The AI service is temporarily unavailable.",
+            internal_detail=f"Failed to initialize Gemini client: {str(exc)}"
+        ) from exc
 
 
 def classify_document(doc: NormalizedDocument, client_override: Optional[object] = None) -> ClassificationResult:
@@ -94,13 +102,19 @@ def classify_document(doc: NormalizedDocument, client_override: Optional[object]
             contents.append(part)
         except Exception as exc:
             logger.error("Failed to construct multimodal part: %s", exc)
-            raise LLMServiceError("Failed to encode document for Gemini multimodal analysis.") from exc
+            raise LLMServiceError(
+                message="Failed to process document media.",
+                internal_detail=f"Failed to encode document for Gemini multimodal analysis: {str(exc)}"
+            ) from exc
     elif doc.raw_text:
         # Use first ~4000 characters for classification to ensure low latency and minimal quota usage
         truncated_sample = doc.raw_text[:4000]
         contents.append(f"Document Text Sample:\n\n{truncated_sample}")
     else:
-        raise LLMServiceError("Document contains neither text nor multimodal payload.")
+        raise LLMServiceError(
+            message="Document content could not be read.",
+            internal_detail="Document contains neither text nor multimodal payload."
+        )
 
     contents.append(CLASSIFICATION_PROMPT)
 
@@ -155,4 +169,7 @@ def classify_document(doc: NormalizedDocument, client_override: Optional[object]
         if isinstance(exc, LLMServiceError):
             raise
         logger.error("Gemini classification API call failed: %s", exc)
-        raise LLMServiceError(f"Classification service error: {str(exc)}") from exc
+        raise LLMServiceError(
+            message="The AI service was temporarily unable to classify the document. Please try again.",
+            internal_detail=f"Classification service error: {str(exc)}"
+        ) from exc

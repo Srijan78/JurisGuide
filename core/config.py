@@ -78,24 +78,47 @@ class EmploymentThresholds:
     high_variable_pay_pct: float = HIGH_VARIABLE_PAY_PCT
 
 
+# ==============================================================================
+# Deterministic Risk Threshold Constants: Rental Agreement Schema
+# ==============================================================================
+RENTAL_DEPOSIT_HIGH_MONTHS: int = 6
+RENTAL_DEPOSIT_MEDIUM_MONTHS: int = 3
+RENTAL_REFUND_MAX_DAYS: int = 30
+RENTAL_LOCK_IN_MAX_MONTHS: int = 11
+RENTAL_ESCALATION_MAX_PCT: float = 10.0
+RENTAL_MIN_TENANT_NOTICE_DAYS: int = 30
+RENTAL_MAX_NOTICE_ASYMMETRY_RATIO: float = 2.0
+
+
 @dataclass(frozen=True)
 class RentalThresholds:
     """Thresholds for deterministic Rental Agreement risk analysis."""
-    max_security_deposit_months: int = 6
-    max_lock_in_months: int = 11
-    max_annual_escalation_pct: float = 10.0
-    min_tenant_notice_days: int = 30
-    max_notice_asymmetry_ratio: float = 2.0
+    max_security_deposit_months: int = RENTAL_DEPOSIT_HIGH_MONTHS
+    moderate_security_deposit_months: int = RENTAL_DEPOSIT_MEDIUM_MONTHS
+    max_deposit_refund_days: int = RENTAL_REFUND_MAX_DAYS
+    max_lock_in_months: int = RENTAL_LOCK_IN_MAX_MONTHS
+    max_annual_escalation_pct: float = RENTAL_ESCALATION_MAX_PCT
+    min_tenant_notice_days: int = RENTAL_MIN_TENANT_NOTICE_DAYS
+    max_notice_asymmetry_ratio: float = RENTAL_MAX_NOTICE_ASYMMETRY_RATIO
+
+
+# ==============================================================================
+# Deterministic Risk Threshold Constants: Freelance Contract Schema
+# ==============================================================================
+FREELANCE_PAYMENT_TERM_EXTENDED_DAYS: int = 45
+FREELANCE_PAYMENT_TERM_STANDARD_DAYS: int = 30
+FREELANCE_MAX_INCLUDED_REVISIONS: int = 3
 
 
 @dataclass(frozen=True)
 class FreelanceThresholds:
     """Thresholds for deterministic Freelance Contract risk analysis."""
-    max_payment_term_days: int = 30
+    extended_payment_term_days: int = FREELANCE_PAYMENT_TERM_EXTENDED_DAYS
+    max_payment_term_days: int = FREELANCE_PAYMENT_TERM_STANDARD_DAYS
     require_late_payment_penalty: bool = True
     require_kill_fee: bool = True
     require_payment_before_ip_transfer: bool = True
-    max_included_revisions: int = 3
+    max_included_revisions: int = FREELANCE_MAX_INCLUDED_REVISIONS
 
 
 @dataclass

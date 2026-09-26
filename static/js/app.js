@@ -136,15 +136,45 @@ document.addEventListener("DOMContentLoaded", () => {
   setProgress(1);
 
   // ----- Tab navigation -----
+  const tabs = [tabFileBtn, tabTextBtn];
+
   tabFileBtn.addEventListener("click", () => switchTab("file"));
   tabTextBtn.addEventListener("click", () => switchTab("text"));
+
+  tabs.forEach((tabBtn, index) => {
+    tabBtn.addEventListener("keydown", (e) => {
+      let targetIndex = null;
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        targetIndex = (index + 1) % tabs.length;
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        targetIndex = (index - 1 + tabs.length) % tabs.length;
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        targetIndex = 0;
+      } else if (e.key === "End") {
+        e.preventDefault();
+        targetIndex = tabs.length - 1;
+      }
+
+      if (targetIndex !== null) {
+        const targetBtn = tabs[targetIndex];
+        const tabType = targetBtn === tabFileBtn ? "file" : "text";
+        switchTab(tabType);
+        targetBtn.focus();
+      }
+    });
+  });
 
   function switchTab(tab) {
     activeTab = tab;
     clearError();
     if (tab === "file") {
       tabFileBtn.setAttribute("aria-selected", "true");
+      tabFileBtn.setAttribute("tabindex", "0");
       tabTextBtn.setAttribute("aria-selected", "false");
+      tabTextBtn.setAttribute("tabindex", "-1");
       tabFile.removeAttribute("hidden");
       tabFile.style.display = "";
       tabFile.classList.add("active");
@@ -153,7 +183,9 @@ document.addEventListener("DOMContentLoaded", () => {
       tabText.classList.remove("active");
     } else {
       tabTextBtn.setAttribute("aria-selected", "true");
+      tabTextBtn.setAttribute("tabindex", "0");
       tabFileBtn.setAttribute("aria-selected", "false");
+      tabFileBtn.setAttribute("tabindex", "-1");
       tabText.removeAttribute("hidden");
       tabText.style.display = "";
       tabText.classList.add("active");

@@ -88,3 +88,70 @@ def test_homepage_and_static_assets_serve():
     js_res = client.get("/static/js/app.js")
     assert js_res.status_code == 200
     assert "DOMContentLoaded" in js_res.text
+
+
+def test_classify_upstream_llm_exception_does_not_leak_raw_details():
+    """Assert that raw LLM/SDK exceptions with internal hostnames or quotas do NOT leak in response body."""
+    sensitive_endpoint = "internal-quota-endpoint-xyz.googleapis.com"
+    sensitive_api_trace = "API_KEY=AIzaSyFakeSecretToken123456"
+
+    # Mock classify_document raising LLMServiceError containing sensitive internal detail
+    with patch("app.classify_document") as mock_classify:
+        from core.exceptions import LLMServiceError
+        mock_classify.side_effect = LLMServiceError(
+            message=f"Raw upstream error from {sensitive_endpoint} with {sensitive_api_trace}",
+            internal_detail=f"Connection refused at https://{sensitive_endpoint}/v1/models/gemini",
+            status_code=502
+        )
+
+        res = client.post(
+            "/api/classify",
+            data={"text_content": "This is a rental lease agreement between landlord and tenant."}
+        )
+
+        # Status code must be 502
+        assert res.status_code == 502
+        # Response body must NOT contain sensitive strings
+        assert sensitive_endpoint not in res.text
+        assert sensitive_api_trace not in res.text
+        assert "AIzaSyFakeSecretToken123456" not in res.text
+
+        # Response must contain only the generic safe message
+        body = res.json()
+        assert body["success"] is False
+        assert body["error_type"] == "AIServiceError"
+        assert body["message"] == "The AI service was temporarily unable to process the document. Please try again."
+
+
+def test_analyze_upstream_llm_exception_does_not_leak_raw_details():
+    """Assert that raw extraction errors containing internal URLs do not leak to caller in /api/analyze."""
+    from core.session import session_store
+    from input.normalizer import normalize_pasted_text
+
+    doc = normalize_pasted_text("Employment agreement text for testing.")
+    session_id = session_store.create_session(doc.to_dict())
+
+    sensitive_detail = "https://internal-quota-endpoint-xyz.googleapis.com/v1/beta/generateContent"
+
+    with patch("app.extract_structured_clauses") as mock_extract:
+        from core.exceptions import LLMServiceError
+        mock_extract.side_effect = LLMServiceError(
+            message=f"Extraction failure connecting to {sensitive_detail}",
+            internal_detail=sensitive_detail,
+            status_code=502
+        )
+
+        res = client.post(
+            "/api/analyze",
+            json={"session_id": session_id, "confirmed_type": "employment_offer"}
+        )
+
+        assert res.status_code == 502
+        assert sensitive_detail not in res.text
+        assert "internal-quota-endpoint-xyz" not in res.text
+
+        body = res.json()
+        assert body["success"] is False
+        assert body["error_type"] == "AIServiceError"
+        assert body["message"] == "The AI service was temporarily unable to process the document. Please try again."
+

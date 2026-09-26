@@ -74,11 +74,24 @@ async def handle_session_error(request: Request, exc: SessionExpiredError):
     )
 
 
+SAFE_AI_SERVICE_MESSAGE = "The AI service was temporarily unable to process the document. Please try again."
+
+
 @app.exception_handler(LLMServiceError)
 async def handle_llm_error(request: Request, exc: LLMServiceError):
+    logger.error("LLM service exception: %s | internal_detail: %s", exc.message, getattr(exc, "internal_detail", ""))
     return JSONResponse(
         status_code=exc.status_code,
-        content={"success": False, "error_type": "AIServiceError", "message": exc.message},
+        content={"success": False, "error_type": "AIServiceError", "message": SAFE_AI_SERVICE_MESSAGE},
+    )
+
+
+@app.exception_handler(SchemaExtractionError)
+async def handle_extraction_error(request: Request, exc: SchemaExtractionError):
+    logger.error("Schema extraction exception: %s | internal_detail: %s", exc.message, getattr(exc, "internal_detail", ""))
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"success": False, "error_type": "ExtractionError", "message": "Failed to extract structured clauses from document. Please try again."},
     )
 
 

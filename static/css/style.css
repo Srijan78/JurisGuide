@@ -13,7 +13,7 @@
   --soot:         #1a1a1a;  /* Deep charcoal background */
   --graphite:     #242424;  /* Elevated panel/card surface */
   --ash:          #3a3a3a;  /* Borders, dividers, inactive controls */
-  --slate:        #6b6b6b;  /* Secondary / muted text */
+  --slate:        #9c9c9c;  /* Secondary / muted text — WCAG AA compliant (5.65:1 on panel, 6.34:1 on page) */
   --fog:          #9a9a9a;  /* Tertiary text, hints */
   --parchment:    #e8e4df;  /* Primary body text — warm off-white */
   --bone:         #ffffff;  /* Reserved ONLY for primary CTA text & high contrast */
@@ -324,7 +324,7 @@ body {
 .progress-label .step-num {
   font-family: var(--font-mono);
   font-size: 0.7rem;
-  color: var(--ash);
+  color: var(--slate);
   margin-right: 4px;
 }
 
@@ -582,7 +582,8 @@ body {
 }
 
 .paste-area::placeholder {
-  color: var(--ash);
+  color: var(--slate);
+  opacity: 0.85;
 }
 
 .paste-area:focus {
@@ -783,7 +784,7 @@ body {
   font-size: 0.9rem;
   margin-top: 0.35rem;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%236b6b6b' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%239c9c9c' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   padding-right: 2rem;
@@ -1200,7 +1201,7 @@ body {
 
 .footer-note {
   font-size: 0.72rem;
-  color: var(--ash);
+  color: var(--slate);
   line-height: 1.5;
 }
 

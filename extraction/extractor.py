@@ -112,12 +112,20 @@ PROMPT_MAP = {
 
 def _get_gemini_client():
     if not settings.gemini_api_key:
-        raise LLMServiceError("GEMINI_API_KEY is not configured in .env file.")
+        logger.error("GEMINI_API_KEY is not configured in environment.")
+        raise LLMServiceError(
+            message="The AI service is not configured.",
+            internal_detail="GEMINI_API_KEY is not configured in .env file."
+        )
     try:
         from google import genai
         return genai.Client(api_key=settings.gemini_api_key)
     except Exception as exc:
-        raise LLMServiceError(f"Failed to initialize Gemini client: {str(exc)}") from exc
+        logger.error("Failed to initialize Gemini client: %s", exc)
+        raise LLMServiceError(
+            message="The AI service is temporarily unavailable.",
+            internal_detail=f"Failed to initialize Gemini client: {str(exc)}"
+        ) from exc
 
 
 def _build_content_parts(doc: NormalizedDocument, prompt_text: str) -> list:
@@ -129,7 +137,10 @@ def _build_content_parts(doc: NormalizedDocument, prompt_text: str) -> list:
     elif doc.raw_text:
         parts.append(f"Full Document Content:\n\n{doc.raw_text}")
     else:
-        raise LLMServiceError("Normalized document is missing content.")
+        raise LLMServiceError(
+            message="Document content could not be read.",
+            internal_detail="Normalized document is missing content."
+        )
     parts.append(prompt_text)
     return parts
 
@@ -208,13 +219,20 @@ def extract_structured_clauses(
             logger.warning("Extraction attempt %d failed: %s", attempt + 1, exc)
             if attempt == 1:
                 raise SchemaExtractionError(
-                    message=f"Failed to extract valid {document_type} clauses: {str(exc)}",
-                    details={"error": str(exc), "attempt": attempt + 1}
+                    message=f"Failed to extract valid {document_type} clauses. Please try again.",
+                    internal_detail=f"Validation/JSON decode error on attempt {attempt + 1}: {str(exc)}",
+                    details={"attempt": attempt + 1}
                 ) from exc
         except Exception as exc:
             if isinstance(exc, (LLMServiceError, SchemaExtractionError)):
                 raise
             logger.error("Gemini extraction call failed unexpectedly: %s", exc)
-            raise LLMServiceError(f"Extraction service error: {str(exc)}") from exc
+            raise LLMServiceError(
+                message="The AI service was temporarily unable to extract document details. Please try again.",
+                internal_detail=f"Extraction service error: {str(exc)}"
+            ) from exc
 
-    raise SchemaExtractionError(message="Extraction failed after retry.")
+    raise SchemaExtractionError(
+        message="Extraction failed after retry. Please try again.",
+        internal_detail="Extraction failed after retry."
+    )
