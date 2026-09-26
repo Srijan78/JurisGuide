@@ -13,6 +13,8 @@ from fastapi import FastAPI, File, Form, UploadFile, Request, HTTPException, sta
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.gzip import GZipMiddleware
+import anyio
 from pydantic import BaseModel, Field
 
 from core.config import settings
@@ -45,6 +47,7 @@ app = FastAPI(
     version=settings.app_version,
     description="GenAI Legal Contract Assistant for Legal Information Accessibility",
 )
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Ensure directories exist and mount static files (safely ignore read-only file systems)
 try:
@@ -154,11 +157,11 @@ async def classify_contract(
     else:
         raise InputValidationError("No document provided. Please upload a file (PDF, DOCX, JPG) or paste contract text.")
 
-    # Execute Gemini Call 1 (Fast classification)
-    classification = classify_document(normalized_doc)
+    # Execute Gemini Call 1 in worker thread (Fast classification without blocking event loop)
+    classification = await anyio.to_thread.run_sync(classify_document, normalized_doc)
 
-    # Store normalized document in short-lived in-memory session (no DB/disk persistence)
-    session_id = session_store.create_session(normalized_doc.to_dict())
+    # Store normalized document in session store (in worker thread)
+    session_id = await anyio.to_thread.run_sync(session_store.create_session, normalized_doc.to_dict())
 
     return {
         "success": True,
@@ -185,8 +188,8 @@ class AnalyzeRequest(BaseModel):
 @app.post("/api/analyze", response_model=AnalysisReport)
 async def analyze_contract(body: AnalyzeRequest):
     """Step 2: User confirms/overrides category -> Extract structured schema (Gemini Call 2) -> Run deterministic code analysis."""
-    # Retrieve and pop session from memory (maximizing privacy)
-    doc_dict = session_store.pop_session(body.session_id)
+    # Retrieve and pop session from store in worker thread
+    doc_dict = await anyio.to_thread.run_sync(session_store.pop_session, body.session_id)
     from input.normalizer import NormalizedDocument
     normalized_doc = NormalizedDocument.from_dict(doc_dict)
 
@@ -194,14 +197,15 @@ async def analyze_contract(body: AnalyzeRequest):
     valid_types = {"employment_offer", "rental_agreement", "freelance_contract", "other"}
     confirmed_type = body.confirmed_type if body.confirmed_type in valid_types else "other"
 
-    # Execute Gemini Call 2 (Extraction)
-    extracted_schema = extract_structured_clauses(normalized_doc, confirmed_type)
+    # Execute Gemini Call 2 in worker thread (Extraction)
+    extracted_schema = await anyio.to_thread.run_sync(extract_structured_clauses, normalized_doc, confirmed_type)
 
-    # Execute Pure Python Analysis Layer (Deterministic - 0 API calls)
-    report = analyze_extracted_document(
-        schema=extracted_schema,
-        document_type=confirmed_type,
-        document_title=normalized_doc.filename,
+    # Execute Pure Python Analysis Layer in worker thread (Deterministic - 0 API calls)
+    report = await anyio.to_thread.run_sync(
+        analyze_extracted_document,
+        extracted_schema,
+        confirmed_type,
+        normalized_doc.filename,
     )
 
     return report

@@ -143,7 +143,7 @@ class Settings:
     # API Keys & LLM Settings
     gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
     gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
-    gemini_fallback_model: str = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
+    gemini_fallback_model: str = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash")
 
     # Ephemeral Storage & Constraints
     session_ttl_seconds: int = _safe_int_env("SESSION_TTL_SECONDS", 600)
