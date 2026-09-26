@@ -137,6 +137,8 @@ class Settings:
 
     # Ephemeral Storage & Constraints
     session_ttl_seconds: int = int(os.getenv("SESSION_TTL_SECONDS", "600"))
+    upstash_redis_rest_url: str = os.getenv("UPSTASH_REDIS_REST_URL", "")
+    upstash_redis_rest_token: str = os.getenv("UPSTASH_REDIS_REST_TOKEN", "")
     max_upload_size_bytes: int = 5 * 1024 * 1024  # 5 MB
     allowed_extensions: tuple[str, ...] = (".pdf", ".jpg", ".jpeg", ".docx", ".txt")
 

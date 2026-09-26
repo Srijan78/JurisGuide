@@ -1,7 +1,7 @@
 # JurisGuide — Multi-Document Legal Contract Analyzer
 ### A GenAI legal assistant built for the *"Legal Information Accessibility"* challenge
 
-[![Tests](https://img.shields.io/badge/tests-65%20passed%20(100%25)-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-73%20passed%20(100%25)-brightgreen.svg)]()
 [![Python](https://img.shields.io/badge/python-3.14-blue.svg)]()
 [![Framework](https://img.shields.io/badge/framework-FastAPI-teal.svg)]()
 [![Model](https://img.shields.io/badge/LLM-Gemini%203.5%20Flash--Lite-orange.svg)]()
@@ -116,7 +116,7 @@ The core engineering differentiator of JurisGuide is the strict decoupling of **
 | **1. Code Quality** | Modular 5-layer separation (`input/`, `classification/`, `schemas/`, `extraction/`, `analysis/`, `output/`). 100% type hinting (`typing`), PEP 8 compliance, Pydantic v2 schemas, zero magic numbers (centralized in `core/config.py`). Each risk rule is a pure, independently testable function returning a severity level, not a single monolithic evaluator. |
 | **2. Security** | Content-based magic-byte validation (rejects spoofed extensions). 5MB upload ceiling. Treat all document text as untrusted data (prompt injection immune). Zero-persistence ephemeral memory. Exception handlers separate internal diagnostic detail (logged only) from a generic, safe user-facing message — no upstream API traces, hostnames, or quota details are ever returned to the client. `.env` strictly gitignored, with zero secrets found across full git history. |
 | **3. Efficiency** | Hard budget of 2 Gemini calls per document (3 worst-case, with one bounded self-healing retry). Pure Python execution for rules ($<5\text{ ms}$). Zero heavy external binary dependencies (no LibreOffice, no heavy OCR packages). Total repository size **< 1MB** (vastly below the 10MB limit). |
-| **4. Testing** | Comprehensive `pytest` suite running **100% offline with zero live API calls** using static mock fixtures. **65 tests** across 8 modules, executing in under 2 seconds, covering full HIGH/MEDIUM/LOW severity bands with exact boundary values for every rule (not just flagged-vs-not-flagged), the classification-confirmation gate, and both fallback outcomes (genuine-but-unsupported legal document vs. no legal content at all). |
+| **4. Testing** | Comprehensive `pytest` suite running **100% offline with zero live API calls** using static mock fixtures. **73 tests** across 9 modules, executing in under 4 seconds, covering full HIGH/MEDIUM/LOW severity bands with exact boundary values for every rule (not just flagged-vs-not-flagged), the classification-confirmation gate, cross-instance serverless session sharing, and both fallback outcomes (genuine-but-unsupported legal document vs. no legal content at all). |
 | **5. Accessibility** | WCAG 2.1 AA compliant, verified by direct contrast-ratio calculation (all text colors ≥4.5:1 against every background they appear on) and end-to-end keyboard testing. Semantic HTML5 (`main`, `header`, `section`, `article`, `form`). Full keyboard navigation including a roving-tabindex tab component (Arrow keys, Home/End) per the WAI-ARIA Tabs Pattern, with visible focus rings (`:focus-visible`). Risk severity is **never indicated by color alone** (paired with explicit textual tags and ARIA labels). Screen-reader live regions. |
 
 ---
@@ -152,7 +152,23 @@ Open your browser at `http://127.0.0.1:8000` to access the accessible contract a
 ```bash
 pytest -v --tb=short
 ```
-*All 65 tests execute in under 2 seconds without requiring an internet connection or live API key.*
+*All 73 tests execute in under 4 seconds without requiring an internet connection or live API key.*
+
+### Deployment Options
+
+#### 1. Vercel Serverless Deployment (Free — No Credit Card Required)
+JurisGuide is configured for Vercel using `@vercel/python` and an external Upstash Redis session store:
+1. Import the repository into [Vercel](https://vercel.com) (Hobby tier).
+2. Configure the following environment variables in the Vercel Dashboard (**Settings $\rightarrow$ Environment Variables**):
+   - `GEMINI_API_KEY`: Your Gemini API key from Google AI Studio.
+   - `UPSTASH_REDIS_REST_URL`: Upstash Redis REST URL (create a free database at [console.upstash.com](https://console.upstash.com/) — no card required).
+   - `UPSTASH_REDIS_REST_TOKEN`: Upstash Redis REST token.
+3. Deploy! Static assets (`/static/*`) are served directly via Vercel's global CDN, and FastAPI routes are executed via `api/index.py`. The Upstash Redis backend enables sessions to survive across independent serverless function invocations without persistent connections.
+
+#### 2. Render / Traditional Server Deployment
+- **Build Command**: `pip install -r requirements.txt`
+- **Start Command**: `uvicorn app:app --host 0.0.0.0 --port $PORT`
+- **Environment Variables**: `GEMINI_API_KEY` (Upstash Redis variables are optional on always-on servers).
 
 ---
 
@@ -161,17 +177,20 @@ pytest -v --tb=short
 ```
 JurisGuide/
 ├── .gitignore               # Strict exclusion of .env, venvs, caches, large files (<10MB)
-├── .env.example             # Safe template for GEMINI_API_KEY
+├── .env.example             # Safe template for GEMINI_API_KEY and Upstash Redis
 ├── README.md                # 4 mandatory sections + full documentation
 ├── LICENSE                  # MIT License
 ├── requirements.txt         # Minimal, modern dependencies
-├── PRD.md                   # Product Requirements Document v2.1
+├── vercel.json              # Vercel serverless deployment configuration
 ├── app.py                   # FastAPI application, routing, and safe error handling
+│
+├── api/
+│   └── index.py             # Vercel serverless function entrypoint
 │
 ├── core/
 │   ├── config.py            # Centralized threshold constants and settings
 │   ├── exceptions.py        # Safe user-facing domain exceptions
-│   └── session.py           # Ephemeral in-memory store with automatic TTL expiration
+│   └── session.py           # Serverless-ready session store backed by Upstash Redis
 │
 ├── input/
 │   ├── validator.py         # Magic bytes content sniffing & 5MB cap
@@ -211,6 +230,7 @@ JurisGuide/
 │
 └── tests/
     ├── conftest.py          # Static mock fixtures for 100% offline testing
+    ├── test_session.py      # Upstash Redis session store & serverless cross-instance tests
     ├── test_validator.py    # Security, magic bytes, and size limit tests
     ├── test_employment.py   # Full severity-band and boundary tests for employment rules
     ├── test_rental.py       # Full severity-band and boundary tests for rental rules
